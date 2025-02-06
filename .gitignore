@@ -169,3 +169,12 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+
+# Terraforn
+.terraform
+*.terraform
+terraform.tfstate
+
+venv
+venv/
