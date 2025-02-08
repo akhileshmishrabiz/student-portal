@@ -8,17 +8,8 @@ https://github.com/akhileshmishrabiz/Devops-zero-to-hero/blob/main/kubernetes/mi
 minikube start
 
 
-# Run PostgreSQL container
-docker run -d \
- --name attendance-db \
- -e POSTGRES_PASSWORD=password \
- -e POSTGRES_DB=mydb \
- -p 5432:5432 \
- postgres:15
-
 # Export database connection string
-export DB_LINK="postgresql://postgres:password@localhost:5432/mydb"
-# export DB_LINK="postgresql://postgres:Aditya_121990@minikube-postgres-db.cfykukwcw419.ap-south-1.rds.amazonaws.com:5432/postgres"
+# export DB_LINK="postgresql://postgres:Aditya_121@minikube.cfykukwcw419.ap-south-1.rds.amazonaws.com:5432/postgres"
 
 # Build and load Docker image
 cd src

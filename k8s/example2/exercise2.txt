@@ -9,10 +9,10 @@ minikube start
 
 
 # Create a rds db and create the link
-# export DB_LINK="postgresql://postgres:Aditya_121990@minikube-postgres-db.cfykukwcw419.ap-south-1.rds.amazonaws.com:5432/postgres"
+# export DB_LINK="postgresql://postgres:password@minikube-postgres-db.cfykukwcw419.ap-south-1.rds.amazonaws.com:5432/postgres"
 DB_USER="postgres"
-DB_PASSWORD="Aditya_121990"
-DB_HOST="minikube-postgres-db.cfykukwcw419.ap-south-1.rds.amazonaws.com"
+DB_PASSWORD="password"
+DB_HOST="minikube.cfykukwcw419.ap-south-1.rds.amazonaws.com"
 DB_PORT="5432"
 DB_NAME="postgres"
 
