@@ -21,4 +21,4 @@ ENV FLASK_APP=app.py
 ENV FLASK_RUN_PORT=8000
 
 # Run app.py when the container launches
-CMD ["python", "app.py"]
+CMD ["python", "run.py"]
