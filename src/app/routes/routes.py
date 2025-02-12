@@ -77,31 +77,35 @@ def add_student():
 @bp.route('/mark_attendance', methods=['POST'])
 @login_required
 def mark_attendance():
-    attendance_date = request.form.get('date', date.today().isoformat())
-    students = Student.query.all()
-    
-    for student in students:
-        status = request.form.get(f'status_{student.id}')
-        if status:
-            # Update existing or create new attendance record
-            attendance = Attendance.query.filter_by(
-                student_id=student.id,
-                date=attendance_date
-            ).first()
-            
-            if attendance:
-                attendance.status = status
-            else:
-                attendance = Attendance(
+    try:
+        attendance_date = request.form.get('date', date.today().isoformat())
+        students = Student.query.all()
+        
+        for student in students:
+            status = request.form.get(f'status_{student.id}')
+            if status:
+                # Update existing or create new attendance record
+                attendance = Attendance.query.filter_by(
                     student_id=student.id,
-                    date=attendance_date,
-                    status=status
-                )
-                db.session.add(attendance)
-    
-    db.session.commit()
-    flash('Attendance marked successfully', 'success')
-    return redirect(url_for('main.attendance', date=attendance_date))
+                    date=attendance_date
+                ).first()
+                
+                if attendance:
+                    attendance.status = status
+                else:
+                    attendance = Attendance(
+                        student_id=student.id,
+                        date=attendance_date,
+                        status=status
+                    )
+                    db.session.add(attendance)
+        
+        db.session.commit()
+        flash('Attendance marked successfully', 'success')
+        return redirect(url_for('main.attendance', date=attendance_date))
+    except Exception as e:
+        flash('Error marking attendance', 'error')
+        return redirect(url_for('main.attendance'))
 
 @bp.route('/edit_student/<int:id>', methods=['POST'])
 @login_required
