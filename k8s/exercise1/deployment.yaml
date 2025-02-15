@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: flask-app
-        image: flask-app
+        image: attendance-app
         imagePullPolicy: Never
         ports:
         - containerPort: 8000

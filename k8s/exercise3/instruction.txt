@@ -1,5 +1,17 @@
 # create secret to hold db details
-kubectl create secret generic db-credentials --from-literal=db-url="postgresql://postgres:Aditya@minikube-postgres-db.cfykukwcw419.ap-south-1.rds.amazonaws.com:5432/postgres"
+kubectl create secret generic db-secret --from-literal=db-url="postgresql://postgres:Adityasfq0@minikube-postgres-db.cfykukwcw419.ap-south-1.rds.amazonaws.com:5432/postgres"
+# Install aws cli 
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip awscliv2.zip
+sudo ./aws/install
+
+
+##  ecr login secret
+kubectl create secret docker-registry aws-secret \
+  --docker-server=366140438193.dkr.ecr.ap-south-1.amazonaws.com \
+  --docker-username=AWS \
+  --docker-password="$(aws ecr get-login-password --region ap-south-1)" 
+
 
 kubectl apply -f .
 
@@ -14,7 +26,7 @@ kubectl port-forward svc/prometheus 9090:9090
 # Port forward grafana
 kubectl port-forward svc/grafana 3000:3000
 
-
+-> admin as user and admin as password
 # Run these in separate terminal windows
 
 # Open the app in browser

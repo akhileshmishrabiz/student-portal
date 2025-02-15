@@ -8,44 +8,29 @@ https://github.com/akhileshmishrabiz/Devops-zero-to-hero/blob/main/kubernetes/mi
 minikube start
 
 
-# Create a rds db and create the link
-# export DB_LINK="postgresql://postgres:password@minikube-postgres-db.cfykukwcw419.ap-south-1.rds.amazonaws.com:5432/postgres"
-DB_USER="postgres"
-DB_PASSWORD="password"
-DB_HOST="minikube.cfykukwcw419.ap-south-1.rds.amazonaws.com"
-DB_PORT="5432"
-DB_NAME="postgres"
+# Export database connection string
+# export DB_LINK="postgresql://postgres:Aditya_121990@minikube-postgres-db.cfykukwcw419.ap-south-1.rds.amazonaws.com:5432/postgres"
+## link -> env DB_LINK -> postgresql://{dbuser}:{userpassword}@{host}:{port}/{dbname}
+
+# Build and load Docker image
+cd src
+docker build -t attendance-app .
+minikube image load attendance-app
 
 # Go to k8s folder
 cd student-portal/k8s
 
 # Create base64 encoded secret
-echo -n $DB_USER | base64
--> copy the value to secret -> DB_USER: <base64-encoded>
-echo -n $DB_PASSWORD
--> copy the value to secret -> DB_PASSWORD: <base64-encoded>
+echo -n $DB_LINK | base64
 
+echo -n $DB_LINK | base64  > db.secret
 
-# Install aws cli 
-curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-unzip awscliv2.zip
-sudo ./aws/install
-
-# login to ecr, and use the secret to pull image
-aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 366140438193.dkr.ecr.ap-south-1.amazonaws.com/bootcamp-prod-2-tier-flask
-
-kubectl create secret generic aws-secret \
-  --from-file=.dockerconfigjson=$HOME/.docker/config.json \
-  --type=kubernetes.io/dockerconfigjson
+# Add the db-secret value in secret.yaml -> here DB_LINK: <base64-encoded-db-link>
 
 # Apply Kubernetes manifests
-kubectl apply -f configmap.yaml
 kubectl apply -f secret.yaml
 kubectl apply -f deployment.yaml
 kubectl apply -f service.yaml
-
-
-  
 
 # Access the app
 minikube service flask-app

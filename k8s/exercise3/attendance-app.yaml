@@ -12,18 +12,20 @@ spec:
       labels:
         app: attendance-app
     spec:
+      imagePullSecrets:
+      - name: aws-secret
       containers:
       - name: attendance-app
-        image: attendance-app:latest
-        imagePullPolicy: Never
+        image: 366140438193.dkr.ecr.ap-south-1.amazonaws.com/student-portal:k8s1
+        imagePullPolicy: Always
         ports:
         - containerPort: 8000
         env:
         - name: DB_LINK
           valueFrom:
             secretKeyRef:
-              name: db-credentials
-              key: db-url
+              name: db-secret
+              key: DB_LINK
 ---
 apiVersion: v1
 kind: Service
