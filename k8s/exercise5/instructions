@@ -1,6 +1,7 @@
 # App sync with image change 
 Chnage one one of the argo app to point to k8s/exercise5/ directory. apply the argo menifest
 - see the changes in argo app
+- also change the app name and lets see if it chnages that
 - Now push the changes to repo and sync the argo app
 - Now update the image tag to k8s2 and push the changes to repo
 
