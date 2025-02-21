@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: attendance-app
+  name: student-portal
 spec:
   replicas: 3
   strategy:
@@ -11,11 +11,11 @@ spec:
       maxUnavailable: 0  # Maximum number of pods that can be unavailable during update
   selector:
     matchLabels:
-      app: attendance-app
+      app: student-portal
   template:
     metadata:
       labels:
-        app: attendance-app
+        app: student-portal
     spec:
       imagePullSecrets:
       - name: aws-secret
@@ -35,10 +35,10 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: attendance-app
+  name: student-portal
 spec:
   selector:
-    app: attendance-app
+    app: student-portal
   ports:
   - port: 8000
     targetPort: 8000

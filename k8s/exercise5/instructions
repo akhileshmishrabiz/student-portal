@@ -1,1 +1,18 @@
 # App sync with image change 
+Chnage one one of the argo app to point to k8s/exercise5/ directory. apply the argo menifest
+- see the changes in argo app
+- Now push the changes to repo and sync the argo app
+- Now update the image tag to k8s2 and push the changes to repo
+
+cd student-portal/src
+run docker bake command to build or run maulal docker build commands
+ecr login > 
+aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 366140438193.dkr.ecr.ap-south-1.amazonaws.com
+
+docker buildx bake app --push
+
+Or ->
+aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 366140438193.dkr.ecr.ap-south-1.amazonaws.com
+
+ docker build -t 366140438193.dkr.ecr.ap-south-1.amazonaws.com/student-portal:k8s2  --platform="linux/amd64"
+    docker push 366140438193.dkr.ecr.ap-south-1.amazonaws.com/student-portal:k8s2
