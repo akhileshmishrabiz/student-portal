@@ -11,7 +11,7 @@ minikube start --addons metrics-server
 kubectl get pods -n kube-system | grep metrics-server
 
 # create secret to hold db details
-kubectl create secret generic db-secret --from-literal=DB_LINK="postgresql://postgres:Aditya_121990@minikube-postgres-db.cfykukwcw419.ap-south-1.rds.amazonaws.com:5432/postgres"
+kubectl create secret generic db-secret --from-literal=DB_LINK="postgresql://postgres:password-for-db0@minikube-postgres-db.cfykukwcw419.ap-south-1.rds.amazonaws.com:5432/postgres"
 
 # create secrets for ecr access
 kubectl create secret docker-registry aws-secret \
