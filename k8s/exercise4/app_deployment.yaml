@@ -31,3 +31,15 @@ spec:
             secretKeyRef:
               name: db-secret
               key: DB_LINK
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: attendance-app
+spec:
+  selector:
+    app: attendance-app
+  ports:
+  - port: 8000
+    targetPort: 8000
+  type: NodePort
