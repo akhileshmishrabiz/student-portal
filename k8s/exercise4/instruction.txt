@@ -11,7 +11,7 @@ minikube start --addons metrics-server
 kubectl get pods -n kube-system | grep metrics-server
 
 # create secret to hold db details
-kubectl create secret generic db-secret --from-literal=DB_LINK="postgresql://postgres:password-for-db0@minikube-postgres-db.cfykukwcw419.ap-south-1.rds.amazonaws.com:5432/postgres"
+kubectl create secret generic db-secret --from-literal=DB_LINK="postgresql://postgres:admin12345@minikube-postgres-db.cfykukwcw419.ap-south-1.rds.amazonaws.com:5432/postgres"
 
 # create secrets for ecr access
 kubectl create secret docker-registry aws-secret \
@@ -115,7 +115,7 @@ kubectl create namespace argocd
 kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 
 # Get the ArgoCD admin password
-kubectl -n argocd get secret argocd-secret -o jsonpath="{.data.password}" | base64 -d
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
 
 # If you get error in getting password, then use below command
 
@@ -129,6 +129,8 @@ kubectl -n argocd patch secret argocd-secret \
     "admin.password": "'$BCRYPT_HASH'",
     "admin.passwordMtime": "'$(date +%FT%T%Z)'"
   }}'
+
+kubectl -n argocd get secret argocd-secret -o jsonpath="{.data.password}" | base64 -d
 
 # Print your new password
 echo "Your ArgoCD password is: $NEW_PASSWORD"

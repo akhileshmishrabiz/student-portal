@@ -21,7 +21,7 @@ spec:
       - name: aws-secret
       containers:
       - name: attendance-app
-        image: 366140438193.dkr.ecr.ap-south-1.amazonaws.com/student-portal:k8s1
+        image: 366140438193.dkr.ecr.ap-south-1.amazonaws.com/student-portal:k8s2
         imagePullPolicy: Always
         ports:
         - containerPort: 8000

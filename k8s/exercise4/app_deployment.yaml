@@ -23,6 +23,13 @@ spec:
       - name: attendance-app
         image: 366140438193.dkr.ecr.ap-south-1.amazonaws.com/student-portal:k8s1
         imagePullPolicy: Always
+        resources:
+          limits:
+            cpu: "1"           # 1 CPU core
+            memory: "512Mi"    # 512 Megabytes memory
+          requests:
+            cpu: "20m"        # 500 milliCPU (0.5 CPU core)
+            memory: "128Mi" 
         ports:
         - containerPort: 8000
         env:
