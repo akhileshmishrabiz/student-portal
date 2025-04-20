@@ -5,7 +5,7 @@ resource "aws_lb" "alb" {
   security_groups    = [aws_security_group.lb.id]
 
   tags = {
-    Environment  = var.environment
+    Environment = var.environment
     Application = var.app_name
   }
 }
@@ -13,7 +13,7 @@ resource "aws_lb" "alb" {
 resource "aws_lb_target_group" "alb" {
   name        = "${var.environment}-${var.app_name}-alb-tg"
   port        = 8000
-  protocol      = "HTTP"
+  protocol    = "HTTP"
   vpc_id      = aws_vpc.main.id
   target_type = "ip"
 
