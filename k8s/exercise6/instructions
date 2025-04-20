@@ -1,0 +1,12 @@
+# create secret to hold db details
+kubectl create secret generic db-secret --from-literal=DB_LINK="postgresql://postgres:admin12345@minikube-postgres-db.cfykukwcw419.ap-south-1.rds.amazonaws.com:5432/postgres" \
+-n day12
+
+# create secrets for ecr access
+kubectl create secret docker-registry aws-secret \
+  --docker-server=366140438193.dkr.ecr.ap-south-1.amazonaws.com \
+  --docker-username=AWS \
+  --docker-password="$(aws ecr get-login-password --region ap-south-1)" \
+  -n day12
+
+  kubectl apply -f deployment.yaml -n day12

@@ -28,4 +28,4 @@ pip install -r requirements.txt
 -login to ecr 
 aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 366140438193.dkr.ecr.ap-south-1.amazonaws.com
 
-Docker buildx bake --push 
+Docker buildx bake app --push 
