@@ -13,6 +13,7 @@ services:
     environment:
       - FLASK_APP=app.py
       - FLASK_RUN_PORT=8000
+      - DB_LINK=postgresql://postgres:password@db:5432/mydb
 
   db:
     image: postgres:latest
