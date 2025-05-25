@@ -1,0 +1,52 @@
+#!/bin/bash
+# entrypoint.sh - Docker entrypoint script
+
+set -e
+
+echo "🔧 Starting application initialization..."
+
+# Wait for database to be ready
+echo "⏳ Waiting for database connection..."
+python -c "
+import time
+import psycopg2
+import os
+from urllib.parse import urlparse
+
+db_url = os.getenv('DB_LINK')
+if db_url:
+    parsed = urlparse(db_url)
+    max_attempts = 30
+    attempt = 0
+    
+    while attempt < max_attempts:
+        try:
+            conn = psycopg2.connect(
+                host=parsed.hostname,
+                port=parsed.port or 5432,
+                user=parsed.username,
+                password=parsed.password,
+                database=parsed.path.lstrip('/'),
+                connect_timeout=5
+            )
+            conn.close()
+            print('✅ Database connection established')
+            break
+        except Exception as e:
+            attempt += 1
+            print(f'⏳ Database connection attempt {attempt}/{max_attempts}: {e}')
+            time.sleep(2)
+    else:
+        print('❌ Failed to connect to database after 30 attempts')
+        exit(1)
+else:
+    print('⚠️  No DB_LINK environment variable found')
+"
+
+# Initialize database
+echo "🗄️  Initializing database..."
+python init_db.py
+
+# Start the application
+echo "🚀 Starting Gunicorn server..."
+exec gunicorn --config gunicorn.conf.py run:app

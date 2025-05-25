@@ -1,0 +1,27 @@
+#!/bin/bash
+# quick-fix.sh - Quick fix for the database issue
+
+echo "🔧 Quick fix for database initialization..."
+
+# Stop current containers
+echo "🛑 Stopping current containers..."
+docker-compose down
+
+# Initialize database directly
+echo "🗄️  Initializing database..."
+docker-compose up -d db
+sleep 10
+
+# Create an initialization container
+echo "📦 Running database initialization..."
+docker run --rm \
+  --network $(basename "$(pwd)")_test_network \
+  -e DB_LINK="postgresql://postgres:password@db:5432/mydb" \
+  $(docker images --format "table {{.Repository}}:{{.Tag}}" | grep student-portal | head -1) \
+  python init_db.py
+
+# Start all services
+echo "🚀 Starting all services..."
+docker-compose up -d
+
+echo "✅ Fix applied! Check http://localhost:8080"

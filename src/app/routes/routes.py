@@ -191,3 +191,28 @@ def edit_class(id):
             flash("Error updating class.", "error")
 
     return render_template("edit_class.html", class_obj=class_obj)
+
+# app/routes/routes.py - Add this route to the existing file
+
+@bp.route("/health")
+def health_check():
+    """Health check endpoint for load balancers and monitoring"""
+    try:
+        # Test database connection
+        db.session.execute(db.text('SELECT 1'))
+        db.session.commit()
+        
+        return {
+            "status": "healthy",
+            "timestamp": datetime.utcnow().isoformat(),
+            "database": "connected",
+            "service": "student-attendance-app"
+        }, 200
+    except Exception as e:
+        return {
+            "status": "unhealthy",
+            "timestamp": datetime.utcnow().isoformat(),
+            "database": "disconnected",
+            "error": str(e),
+            "service": "student-attendance-app"
+        }, 503
