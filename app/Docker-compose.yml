@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   app:
     build: . 
@@ -16,7 +14,7 @@ services:
       - DB_LINK=postgresql://postgres:password@db:5432/mydb
 
   db:
-    image: postgres:latest
+    image: postgres:15
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password

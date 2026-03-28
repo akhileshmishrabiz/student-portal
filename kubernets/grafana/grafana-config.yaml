@@ -1,0 +1,123 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-datasources
+  namespace: testing-stuff
+  labels:
+    app: grafana
+data:
+  datasources.yaml: |
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        access: proxy
+        url: http://prometheus:9090
+        isDefault: true
+        editable: true
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-provider
+  namespace: testing-stuff
+  labels:
+    app: grafana
+data:
+  dashboards.yaml: |
+    apiVersion: 1
+    providers:
+      - name: 'Default'
+        orgId: 1
+        folder: ''
+        type: file
+        disableDeletion: false
+        editable: true
+        options:
+          path: /var/lib/grafana/dashboards
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-student-portal
+  namespace: testing-stuff
+  labels:
+    app: grafana
+data:
+  student-portal-dashboard.json: |
+    {
+      "title": "Student Portal Monitoring",
+      "tags": ["student-portal", "flask"],
+      "timezone": "browser",
+      "panels": [
+          {
+            "title": "HTTP Request Rate",
+            "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+            "targets": [
+              {
+                "expr": "rate(http_requests_total[5m])",
+                "legendFormat": "{{method}} {{endpoint}} {{status}}"
+              }
+            ],
+            "type": "graph"
+          },
+          {
+            "title": "Request Duration (95th percentile)",
+            "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+            "targets": [
+              {
+                "expr": "histogram_quantile(0.95, rate(request_duration_seconds_bucket[5m]))",
+                "legendFormat": "{{endpoint}}"
+              }
+            ],
+            "type": "graph"
+          },
+          {
+            "title": "HTTP Requests by Status Code",
+            "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+            "targets": [
+              {
+                "expr": "sum(rate(http_requests_total[5m])) by (status)",
+                "legendFormat": "Status {{status}}"
+              }
+            ],
+            "type": "graph"
+          },
+          {
+            "title": "Attendance Records Marked",
+            "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+            "targets": [
+              {
+                "expr": "student_attendance_marked_total",
+                "legendFormat": "Total Attendance"
+              }
+            ],
+            "type": "graph"
+          },
+          {
+            "title": "PostgreSQL Active Connections",
+            "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
+            "targets": [
+              {
+                "expr": "pg_stat_activity_count",
+                "legendFormat": "Active Connections"
+              }
+            ],
+            "type": "graph"
+          },
+          {
+            "title": "PostgreSQL Database Size",
+            "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
+            "targets": [
+              {
+                "expr": "pg_database_size_bytes{datname='studentportal'}",
+                "legendFormat": "Database Size"
+              }
+            ],
+            "type": "graph"
+          }
+      ],
+      "refresh": "10s",
+      "schemaVersion": 16,
+      "version": 1
+    }

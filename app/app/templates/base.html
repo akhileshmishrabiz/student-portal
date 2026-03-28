@@ -33,6 +33,8 @@
                             <a href="{{ url_for('main.students') }}" class="text-white hover:bg-navy px-4 py-2 rounded-md text-lg">Students</a>
                             <a href="{{ url_for('main.attendance') }}" class="text-white hover:bg-navy px-4 py-2 rounded-md text-lg">Attendance</a>
                             <a href="{{ url_for('main.classes') }}" class="text-white hover:bg-navy px-4 py-2 rounded-md text-lg">Classes</a>
+                            <a href="{{ url_for('main.assignments') }}" class="text-white hover:bg-navy px-4 py-2 rounded-md text-lg">Assignments</a>
+                            <a href="{{ url_for('main.announcements') }}" class="text-white hover:bg-navy px-4 py-2 rounded-md text-lg">Announcements</a>
                         </div>
                         <div class="flex items-center space-x-6">
                             <span class="text-white text-lg">{{ current_user.username }}</span>
@@ -53,6 +55,8 @@
                 <a href="{{ url_for('main.students') }}" class="text-white hover:bg-navy-light block px-4 py-3 rounded-md text-lg">Students</a>
                 <a href="{{ url_for('main.attendance') }}" class="text-white hover:bg-navy-light block px-4 py-3 rounded-md text-lg">Attendance</a>
                 <a href="{{ url_for('main.classes') }}" class="text-white hover:bg-navy-light block px-4 py-3 rounded-md text-lg">Classes</a>
+                <a href="{{ url_for('main.assignments') }}" class="text-white hover:bg-navy-light block px-4 py-3 rounded-md text-lg">Assignments</a>
+                <a href="{{ url_for('main.announcements') }}" class="text-white hover:bg-navy-light block px-4 py-3 rounded-md text-lg">Announcements</a>
                 <div class="border-t border-navy-light pt-4">
                     <span class="text-white block px-4 py-2 text-lg">{{ current_user.username }}</span>
                     <a href="{{ url_for('auth.logout') }}" class="text-red-300 hover:text-red-400 block px-4 py-2 text-lg">Logout</a>
