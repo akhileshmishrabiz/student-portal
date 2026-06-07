@@ -81,7 +81,11 @@ def _parse_names(raw_text):
 
 def _wheel_state(wheel):
     active = wheel.active_names
-    spoken = [n for n in wheel.names if n.status == "spoken" or (wheel.mode == "repeat" and n.pick_count > 0)]
+    spoken = [
+        n
+        for n in wheel.names
+        if n.status == "spoken" or (wheel.mode == "repeat" and n.pick_count > 0)
+    ]
     waiting_elim = [n for n in wheel.names if n.status == "waiting"]
     spoken_count, total = wheel.progress
 
@@ -100,13 +104,14 @@ def _wheel_state(wheel):
         "spoken_count": spoken_count,
         "total": total,
         "active": [
-            {"id": n.id, "name": n.name, "color_index": n.color_index}
-            for n in active
+            {"id": n.id, "name": n.name, "color_index": n.color_index} for n in active
         ],
         "waiting": [
             {"id": n.id, "name": n.name, "status": n.status, "pick_count": n.pick_count}
-            for n in waiting_elim if wheel.mode == "elimination"
-        ] or [
+            for n in waiting_elim
+            if wheel.mode == "elimination"
+        ]
+        or [
             {"id": n.id, "name": n.name, "status": n.status, "pick_count": n.pick_count}
             for n in wheel.names
         ],

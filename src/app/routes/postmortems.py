@@ -58,7 +58,9 @@ def list_postmortems():
 @postmortems_bp.route("/create", methods=["GET", "POST"])
 @login_required
 def create_postmortem():
-    incident_id_raw = request.args.get("incident_id") or request.form.get("incident_id", "")
+    incident_id_raw = request.args.get("incident_id") or request.form.get(
+        "incident_id", ""
+    )
     if not incident_id_raw.isdigit():
         flash("Select an incident to write a postmortem.", "error")
         return redirect(url_for("incidents.list_incidents"))
@@ -67,7 +69,9 @@ def create_postmortem():
 
     if incident.postmortem:
         flash("A postmortem already exists for this incident.", "error")
-        return redirect(url_for("postmortems.view_postmortem", postmortem_id=incident.postmortem.id))
+        return redirect(
+            url_for("postmortems.view_postmortem", postmortem_id=incident.postmortem.id)
+        )
 
     if incident.status not in ("resolved", "postmortem_pending", "closed"):
         flash("Resolve the incident before starting a postmortem.", "error")
@@ -84,9 +88,12 @@ def create_postmortem():
             summary=request.form.get("summary", "").strip() or None,
             impact=request.form.get("impact", "").strip() or incident.customer_impact,
             root_cause=request.form.get("root_cause", "").strip() or None,
-            contributing_factors=request.form.get("contributing_factors", "").strip() or None,
-            detection_analysis=request.form.get("detection_analysis", "").strip() or None,
-            resolution_summary=request.form.get("resolution_summary", "").strip() or None,
+            contributing_factors=request.form.get("contributing_factors", "").strip()
+            or None,
+            detection_analysis=request.form.get("detection_analysis", "").strip()
+            or None,
+            resolution_summary=request.form.get("resolution_summary", "").strip()
+            or None,
             what_went_well=request.form.get("what_went_well", "").strip() or None,
             what_went_wrong=request.form.get("what_went_wrong", "").strip() or None,
             lessons_learned=request.form.get("lessons_learned", "").strip() or None,
@@ -106,8 +113,13 @@ def create_postmortem():
             )
 
         db.session.commit()
-        flash("Postmortem draft created. Fill in all sections before publishing.", "success")
-        return redirect(url_for("postmortems.view_postmortem", postmortem_id=postmortem.id))
+        flash(
+            "Postmortem draft created. Fill in all sections before publishing.",
+            "success",
+        )
+        return redirect(
+            url_for("postmortems.view_postmortem", postmortem_id=postmortem.id)
+        )
 
     timeline_lines = []
     for event in incident.events:
@@ -144,17 +156,27 @@ def update_postmortem(postmortem_id):
     postmortem = get_postmortem_for_user(postmortem_id)
     incident = postmortem.incident
 
-    postmortem.title = request.form.get("title", postmortem.title).strip() or postmortem.title
+    postmortem.title = (
+        request.form.get("title", postmortem.title).strip() or postmortem.title
+    )
     postmortem.summary = request.form.get("summary", "").strip() or None
     postmortem.impact = request.form.get("impact", "").strip() or None
     postmortem.root_cause = request.form.get("root_cause", "").strip() or None
-    postmortem.contributing_factors = request.form.get("contributing_factors", "").strip() or None
-    postmortem.detection_analysis = request.form.get("detection_analysis", "").strip() or None
-    postmortem.resolution_summary = request.form.get("resolution_summary", "").strip() or None
+    postmortem.contributing_factors = (
+        request.form.get("contributing_factors", "").strip() or None
+    )
+    postmortem.detection_analysis = (
+        request.form.get("detection_analysis", "").strip() or None
+    )
+    postmortem.resolution_summary = (
+        request.form.get("resolution_summary", "").strip() or None
+    )
     postmortem.what_went_well = request.form.get("what_went_well", "").strip() or None
     postmortem.what_went_wrong = request.form.get("what_went_wrong", "").strip() or None
     postmortem.lessons_learned = request.form.get("lessons_learned", "").strip() or None
-    postmortem.timeline_summary = request.form.get("timeline_summary", "").strip() or None
+    postmortem.timeline_summary = (
+        request.form.get("timeline_summary", "").strip() or None
+    )
 
     new_status = request.form.get("status", postmortem.status)
     if new_status in POSTMORTEM_STATUSES and new_status != postmortem.status:
@@ -191,12 +213,19 @@ def add_action_item(postmortem_id):
 
     if not title:
         flash("Action item title is required.", "error")
-        return redirect(url_for("postmortems.view_postmortem", postmortem_id=postmortem.id))
+        return redirect(
+            url_for("postmortems.view_postmortem", postmortem_id=postmortem.id)
+        )
 
     owner_id = int(owner_id_raw) if owner_id_raw.isdigit() else None
-    if owner_id and validate_assignee_for_team(postmortem.incident.team_id, owner_id) is False:
+    if (
+        owner_id
+        and validate_assignee_for_team(postmortem.incident.team_id, owner_id) is False
+    ):
         flash("Owner must be a team member.", "error")
-        return redirect(url_for("postmortems.view_postmortem", postmortem_id=postmortem.id))
+        return redirect(
+            url_for("postmortems.view_postmortem", postmortem_id=postmortem.id)
+        )
 
     due_date = None
     if due_date_raw:
@@ -227,7 +256,9 @@ def promote_action_item(item_id):
 
     if item.ticket_id:
         flash("This action item already has a linked ticket.", "error")
-        return redirect(url_for("postmortems.view_postmortem", postmortem_id=postmortem.id))
+        return redirect(
+            url_for("postmortems.view_postmortem", postmortem_id=postmortem.id)
+        )
 
     ticket = Ticket(
         team_id=incident.team_id,

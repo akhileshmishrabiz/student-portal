@@ -169,9 +169,7 @@ def create_retro():
         db.session.add(retro)
         db.session.commit()
 
-        db.session.add(
-            RetroParticipant(retro_id=retro.id, user_id=current_user.id)
-        )
+        db.session.add(RetroParticipant(retro_id=retro.id, user_id=current_user.id))
         db.session.commit()
 
         flash("Retro board created! Share the link with your team.", "success")

@@ -8,7 +8,11 @@ from sqlalchemy import func
 
 from app import db
 from app.models.models import Team, TeamMember, Ticket, User
-from app.routes.helpers import unique_username_from_email, validate_email, validate_password
+from app.routes.helpers import (
+    unique_username_from_email,
+    validate_email,
+    validate_password,
+)
 
 
 def normalize_project_key(value):
@@ -62,8 +66,7 @@ def team_member_users(team_id):
 
 def user_is_team_member(team_id, user_id):
     return (
-        TeamMember.query.filter_by(team_id=team_id, user_id=user_id).first()
-        is not None
+        TeamMember.query.filter_by(team_id=team_id, user_id=user_id).first() is not None
     )
 
 
@@ -160,8 +163,6 @@ def upsert_team_member(team, email, password, username=None, role="member"):
 
     existing = TeamMember.query.filter_by(team_id=team.id, user_id=user.id).first()
     if existing is None:
-        db.session.add(
-            TeamMember(team_id=team.id, user_id=user.id, role=role)
-        )
+        db.session.add(TeamMember(team_id=team.id, user_id=user.id, role=role))
 
     return user, created, None

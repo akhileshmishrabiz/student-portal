@@ -176,7 +176,10 @@ def create_incident():
             else (on_call_user_id or current_user.id)
         )
 
-        if on_call_user_id and validate_assignee_for_team(team.id, on_call_user_id) is False:
+        if (
+            on_call_user_id
+            and validate_assignee_for_team(team.id, on_call_user_id) is False
+        ):
             flash("On-call assignee must be a team member.", "error")
             return redirect(url_for("incidents.create_incident", team_id=team.id))
         if commander_id and validate_assignee_for_team(team.id, commander_id) is False:
@@ -212,11 +215,16 @@ def create_incident():
                 incident,
                 current_user.id,
                 "alert",
-                request.form.get("alert_message", "Automated alert triggered incident creation."),
+                request.form.get(
+                    "alert_message", "Automated alert triggered incident creation."
+                ),
             )
 
         db.session.commit()
-        flash(f"Incident {incident.key} declared. Page the on-call and start the timeline.", "success")
+        flash(
+            f"Incident {incident.key} declared. Page the on-call and start the timeline.",
+            "success",
+        )
         return redirect(url_for("incidents.view_incident", incident_id=incident.id))
 
     selected_team, _ = _selected_team(request.args.get("team_id", ""))
@@ -351,7 +359,10 @@ def update_incident(incident_id):
 
     commander_id = int(commander_id_raw) if commander_id_raw.isdigit() else None
     on_call_id = int(on_call_id_raw) if on_call_id_raw.isdigit() else None
-    if commander_id and validate_assignee_for_team(incident.team_id, commander_id) is False:
+    if (
+        commander_id
+        and validate_assignee_for_team(incident.team_id, commander_id) is False
+    ):
         flash("Incident commander must be a team member.", "error")
         return redirect(url_for("incidents.view_incident", incident_id=incident.id))
     if on_call_id and validate_assignee_for_team(incident.team_id, on_call_id) is False:

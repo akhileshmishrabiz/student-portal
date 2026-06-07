@@ -123,9 +123,7 @@ def seed_devops_retros():
         db.session.add(retro)
         db.session.flush()
 
-        db.session.add(
-            RetroParticipant(retro_id=retro.id, user_id=admin.id)
-        )
+        db.session.add(RetroParticipant(retro_id=retro.id, user_id=admin.id))
 
         for card_data in retro_data.get("cards", []):
             author = User.query.filter_by(username=card_data["author"]).first()
@@ -185,9 +183,7 @@ def seed_devops_teams():
                 team_id=team.id, user_id=user.id
             ).first()
             if existing is None:
-                db.session.add(
-                    TeamMember(team_id=team.id, user_id=user.id, role=role)
-                )
+                db.session.add(TeamMember(team_id=team.id, user_id=user.id, role=role))
             elif role == "owner" and existing.role != "owner":
                 existing.role = "owner"
 
@@ -301,7 +297,9 @@ def seed_devops_incidents(team_by_key=None):
         if "detected_at_offset_hours" in inc_data:
             detected_at = now + timedelta(hours=inc_data["detected_at_offset_hours"])
         elif "detected_at_offset_minutes" in inc_data:
-            detected_at = now + timedelta(minutes=inc_data["detected_at_offset_minutes"])
+            detected_at = now + timedelta(
+                minutes=inc_data["detected_at_offset_minutes"]
+            )
 
         def _offset_time(minutes_key):
             if minutes_key not in inc_data:
@@ -368,7 +366,11 @@ def seed_devops_incidents(team_by_key=None):
                 lessons_learned=pm_data.get("lessons_learned"),
                 timeline_summary=pm_data.get("timeline_summary"),
                 created_by=admin.id,
-                published_at=now - timedelta(days=1) if pm_data.get("status") == "published" else None,
+                published_at=(
+                    now - timedelta(days=1)
+                    if pm_data.get("status") == "published"
+                    else None
+                ),
             )
             db.session.add(postmortem)
             db.session.flush()
@@ -376,7 +378,9 @@ def seed_devops_incidents(team_by_key=None):
             for item_data in pm_data.get("action_items", []):
                 owner = _user_by_username(item_data.get("assignee"))
                 linked_ticket = None
-                if item_data.get("status") == "ticket_created" and item_data.get("ticket_title"):
+                if item_data.get("status") == "ticket_created" and item_data.get(
+                    "ticket_title"
+                ):
                     linked_ticket = Ticket(
                         team_id=dev_team.id,
                         ticket_number=(
@@ -384,7 +388,8 @@ def seed_devops_incidents(team_by_key=None):
                             .filter_by(team_id=dev_team.id)
                             .scalar()
                             or 0
-                        ) + 1,
+                        )
+                        + 1,
                         title=item_data["ticket_title"],
                         description=f"Action item from postmortem: {postmortem.title}",
                         status="todo",
@@ -492,9 +497,8 @@ def backfill_ticket_teams():
     if default_team is None:
         return
 
-    updated = (
-        Ticket.query.filter(Ticket.team_id.is_(None))
-        .update({Ticket.team_id: default_team.id}, synchronize_session=False)
+    updated = Ticket.query.filter(Ticket.team_id.is_(None)).update(
+        {Ticket.team_id: default_team.id}, synchronize_session=False
     )
     if updated:
         db.session.commit()
@@ -505,22 +509,28 @@ def ensure_schema():
     inspector = inspect(db.engine)
     user_cols = {c["name"] for c in inspector.get_columns("user")}
     retro_cols = {c["name"] for c in inspector.get_columns("retro")}
-    ticket_cols = {c["name"] for c in inspector.get_columns("ticket")} if "ticket" in inspector.get_table_names() else set()
+    ticket_cols = (
+        {c["name"] for c in inspector.get_columns("ticket")}
+        if "ticket" in inspector.get_table_names()
+        else set()
+    )
 
     if "is_guest" not in user_cols:
         db.session.execute(
-            text('ALTER TABLE "user" ADD COLUMN is_guest BOOLEAN DEFAULT FALSE NOT NULL')
+            text(
+                'ALTER TABLE "user" ADD COLUMN is_guest BOOLEAN DEFAULT FALSE NOT NULL'
+            )
         )
     if "display_name" not in user_cols:
         db.session.execute(
             text('ALTER TABLE "user" ADD COLUMN display_name VARCHAR(80)')
         )
     if "share_token" not in retro_cols:
+        db.session.execute(text("ALTER TABLE retro ADD COLUMN share_token VARCHAR(32)"))
         db.session.execute(
-            text("ALTER TABLE retro ADD COLUMN share_token VARCHAR(32)")
-        )
-        db.session.execute(
-            text("CREATE UNIQUE INDEX IF NOT EXISTS ix_retro_share_token ON retro (share_token)")
+            text(
+                "CREATE UNIQUE INDEX IF NOT EXISTS ix_retro_share_token ON retro (share_token)"
+            )
         )
     if ticket_cols and "team_id" not in ticket_cols:
         db.session.execute(

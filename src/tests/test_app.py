@@ -4,7 +4,26 @@ import pytest
 os.environ.setdefault("DB_LINK", "sqlite:///:memory:")
 
 from app import create_app, db
-from app.models.models import User, Student, Attendance, Assignment, Retro, RetroCard, RetroLike, Ticket, Subtask, TicketComment, Team, TeamMember, Incident, Postmortem, OnCallSchedule, SpeakWheel, SpeakWheelName, SpeakWheelPick
+from app.models.models import (
+    User,
+    Student,
+    Attendance,
+    Assignment,
+    Retro,
+    RetroCard,
+    RetroLike,
+    Ticket,
+    Subtask,
+    TicketComment,
+    Team,
+    TeamMember,
+    Incident,
+    Postmortem,
+    OnCallSchedule,
+    SpeakWheel,
+    SpeakWheelName,
+    SpeakWheelPick,
+)
 from app.seed import ADMIN_EMAIL
 from datetime import date, timedelta
 
@@ -56,6 +75,7 @@ def admin_client(client, app):
 
 # ── Auth tests ────────────────────────────────────────────────────────────────
 
+
 def test_health_endpoint(client):
     response = client.get("/health")
     assert response.status_code == 200
@@ -80,7 +100,9 @@ def test_devops_retros_seeded(app):
         assert "ECS Day 9 — Terraform Ship Retro" in titles
         assert "Kubernetes Pod Crash Bingo" in titles
 
-        ecs_retro = Retro.query.filter_by(title="ECS Day 9 — Terraform Ship Retro").first()
+        ecs_retro = Retro.query.filter_by(
+            title="ECS Day 9 — Terraform Ship Retro"
+        ).first()
         assert ecs_retro.share_token is not None
         assert RetroCard.query.filter_by(retro_id=ecs_retro.id).count() >= 3
 
@@ -95,7 +117,11 @@ def test_regular_user_sees_seeded_retros(auth_client):
 def test_register_new_user(client, app):
     response = client.post(
         "/register",
-        data={"username": "alice", "email": "alice@example.com", "password": "Secure99"},
+        data={
+            "username": "alice",
+            "email": "alice@example.com",
+            "password": "Secure99",
+        },
         follow_redirects=True,
     )
     assert response.status_code == 200
@@ -130,6 +156,7 @@ def test_login_invalid_credentials(client):
 
 # ── Student tests ─────────────────────────────────────────────────────────────
 
+
 def test_add_student(auth_client, app):
     response = auth_client.post(
         "/add_student",
@@ -157,6 +184,7 @@ def test_delete_student(auth_client, app):
 
 # ── Attendance tests ──────────────────────────────────────────────────────────
 
+
 def test_mark_attendance(auth_client, app):
     with app.app_context():
         student = Student(name="Attend Me")
@@ -181,6 +209,7 @@ def test_mark_attendance(auth_client, app):
 
 
 # ── Assignment tests ──────────────────────────────────────────────────────────
+
 
 def test_add_assignment(auth_client, app):
     due = (date.today() + timedelta(days=7)).isoformat()
@@ -211,6 +240,7 @@ def test_toggle_assignment(auth_client, app):
 
 
 # ── Retro tests ───────────────────────────────────────────────────────────────
+
 
 def test_admin_can_create_retro(admin_client, app):
     response = admin_client.post(
@@ -324,6 +354,7 @@ def test_non_admin_cannot_create_retro(auth_client):
 
 
 # ── Ticket tests ──────────────────────────────────────────────────────────────
+
 
 def test_devops_teams_and_tickets_seeded(app):
     with app.app_context():
@@ -520,6 +551,7 @@ def test_share_link_and_guest_join(app):
 
 # ── Incident & Postmortem tests ───────────────────────────────────────────────
 
+
 def test_devops_incidents_seeded(app):
     with app.app_context():
         team = Team.query.filter_by(project_key="DEV").first()
@@ -651,6 +683,7 @@ def test_postmortem_flow(auth_client, app):
     )
     with app.app_context():
         from app.models.models import PostmortemActionItem
+
         item = PostmortemActionItem.query.filter_by(postmortem_id=pm_id).first()
         assert item is not None
         item_id = item.id
@@ -673,9 +706,12 @@ def test_simulate_alert(admin_client):
 
 # ── Speak Wheel tests ─────────────────────────────────────────────────────────
 
+
 def test_devops_wheel_seeded(app):
     with app.app_context():
-        wheel = SpeakWheel.query.filter_by(title="Platform DevOps Standup — Who Speaks First?").first()
+        wheel = SpeakWheel.query.filter_by(
+            title="Platform DevOps Standup — Who Speaks First?"
+        ).first()
         assert wheel is not None
         assert wheel.share_token is not None
         assert SpeakWheelName.query.filter_by(wheel_id=wheel.id).count() >= 2
@@ -710,12 +746,17 @@ def test_create_wheel_add_names_and_spin(auth_client, app):
 
     with app.app_context():
         assert SpeakWheelPick.query.filter_by(wheel_id=wheel_id).count() == 1
-        assert SpeakWheelName.query.filter_by(wheel_id=wheel_id, status="spoken").count() == 1
+        assert (
+            SpeakWheelName.query.filter_by(wheel_id=wheel_id, status="spoken").count()
+            == 1
+        )
 
 
 def test_wheel_watch_state_public(client, app):
     with app.app_context():
-        wheel = SpeakWheel.query.filter_by(title="Platform DevOps Standup — Who Speaks First?").first()
+        wheel = SpeakWheel.query.filter_by(
+            title="Platform DevOps Standup — Who Speaks First?"
+        ).first()
         wheel_id = wheel.id
 
     response = client.get(f"/wheel/{wheel_id}/state")

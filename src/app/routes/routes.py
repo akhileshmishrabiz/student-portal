@@ -1,6 +1,15 @@
 from flask import Blueprint, jsonify, render_template, request, redirect, url_for, flash
 from flask_login import login_required, current_user
-from app.models.models import Student, Attendance, db, Class, Assignment, Announcement, Ticket, Incident
+from app.models.models import (
+    Student,
+    Attendance,
+    db,
+    Class,
+    Assignment,
+    Announcement,
+    Ticket,
+    Incident,
+)
 from datetime import datetime, date
 from sqlalchemy import text
 from app.routes.incident_helpers import accessible_incidents_query, current_on_call
@@ -45,9 +54,7 @@ def dashboard():
     today_attendance = Attendance.query.filter_by(date=today, status="Present").count()
 
     # Calculate total attendance rate
-    total_marked_days = (
-        db.session.query(Attendance.date).distinct().count()
-    )
+    total_marked_days = db.session.query(Attendance.date).distinct().count()
     total_present = Attendance.query.filter_by(status="Present").count()
     total_records = Attendance.query.count()
 
@@ -56,19 +63,28 @@ def dashboard():
     )
 
     # Get pinned announcements + 3 most recent
-    announcements = Announcement.query.filter_by(is_pinned=True).order_by(
-        Announcement.created_at.desc()
-    ).all()
-    recent = Announcement.query.filter_by(is_pinned=False).order_by(
-        Announcement.created_at.desc()
-    ).limit(3).all()
+    announcements = (
+        Announcement.query.filter_by(is_pinned=True)
+        .order_by(Announcement.created_at.desc())
+        .all()
+    )
+    recent = (
+        Announcement.query.filter_by(is_pinned=False)
+        .order_by(Announcement.created_at.desc())
+        .limit(3)
+        .all()
+    )
     announcements = announcements + recent
 
     # Get upcoming assignments (due today or later, not completed)
-    upcoming_assignments = Assignment.query.filter(
-        Assignment.due_date >= today,
-        Assignment.is_completed == False
-    ).order_by(Assignment.due_date.asc()).limit(5).all()
+    upcoming_assignments = (
+        Assignment.query.filter(
+            Assignment.due_date >= today, Assignment.is_completed == False
+        )
+        .order_by(Assignment.due_date.asc())
+        .limit(5)
+        .all()
+    )
 
     open_incidents = (
         accessible_incidents_query()
@@ -269,17 +285,25 @@ def edit_class(id):
 
 # ── Assignments ──────────────────────────────────────────────────────────────
 
+
 @bp.route("/assignments")
 @login_required
 def assignments():
     today = date.today()
-    pending = Assignment.query.filter(
-        Assignment.is_completed == False
-    ).order_by(Assignment.due_date.asc()).all()
-    completed = Assignment.query.filter(
-        Assignment.is_completed == True
-    ).order_by(Assignment.due_date.desc()).limit(10).all()
-    return render_template("assignments.html", pending=pending, completed=completed, today=today)
+    pending = (
+        Assignment.query.filter(Assignment.is_completed == False)
+        .order_by(Assignment.due_date.asc())
+        .all()
+    )
+    completed = (
+        Assignment.query.filter(Assignment.is_completed == True)
+        .order_by(Assignment.due_date.desc())
+        .limit(10)
+        .all()
+    )
+    return render_template(
+        "assignments.html", pending=pending, completed=completed, today=today
+    )
 
 
 @bp.route("/add_assignment", methods=["POST"])
@@ -330,15 +354,20 @@ def delete_assignment(id):
 
 # ── Announcements ─────────────────────────────────────────────────────────────
 
+
 @bp.route("/announcements")
 @login_required
 def announcements():
-    pinned = Announcement.query.filter_by(is_pinned=True).order_by(
-        Announcement.created_at.desc()
-    ).all()
-    others = Announcement.query.filter_by(is_pinned=False).order_by(
-        Announcement.created_at.desc()
-    ).all()
+    pinned = (
+        Announcement.query.filter_by(is_pinned=True)
+        .order_by(Announcement.created_at.desc())
+        .all()
+    )
+    others = (
+        Announcement.query.filter_by(is_pinned=False)
+        .order_by(Announcement.created_at.desc())
+        .all()
+    )
     return render_template("announcements.html", pinned=pinned, others=others)
 
 

@@ -55,7 +55,9 @@ def create_team():
             flash("Team name is required.", "error")
             return redirect(url_for("teams.create_team"))
         if len(project_key) < 2:
-            flash("Project key must be at least 2 characters (letters/numbers).", "error")
+            flash(
+                "Project key must be at least 2 characters (letters/numbers).", "error"
+            )
             return redirect(url_for("teams.create_team"))
         if Team.query.filter_by(project_key=project_key).first():
             flash(f"Project key '{project_key}' is already in use.", "error")
@@ -74,7 +76,10 @@ def create_team():
         )
         db.session.commit()
 
-        flash(f"Team '{team.name}' created. Ticket keys will use {team.project_key}-1, {team.project_key}-2, …", "success")
+        flash(
+            f"Team '{team.name}' created. Ticket keys will use {team.project_key}-1, {team.project_key}-2, …",
+            "success",
+        )
         return redirect(url_for("teams.view_team", team_id=team.id))
 
     return render_template("teams/create.html")
@@ -140,9 +145,7 @@ def add_member(team_id):
             )
             return redirect(url_for("teams.view_team", team_id=team.id))
 
-    user, created, error = upsert_team_member(
-        team, email, password, username=username
-    )
+    user, created, error = upsert_team_member(team, email, password, username=username)
     if error:
         flash(error, "error")
         return redirect(url_for("teams.view_team", team_id=team.id))

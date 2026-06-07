@@ -3,10 +3,13 @@ from datetime import datetime, timezone
 from bcrypt import hashpw, checkpw, gensalt
 from flask_login import UserMixin
 
-
 RETRO_CATEGORIES = {
     "went_well": {"label": "What Went Well", "emoji": "🎉", "color": "#fef08a"},
-    "needs_improvement": {"label": "What Needs Improvement", "emoji": "🔧", "color": "#fbcfe8"},
+    "needs_improvement": {
+        "label": "What Needs Improvement",
+        "emoji": "🔧",
+        "color": "#fbcfe8",
+    },
     "action_items": {"label": "Action Items", "emoji": "📋", "color": "#bbf7d0"},
 }
 
@@ -97,9 +100,7 @@ class Retro(db.Model):
     participants = db.relationship(
         "RetroParticipant", backref="retro", cascade="all, delete-orphan"
     )
-    cards = db.relationship(
-        "RetroCard", backref="retro", cascade="all, delete-orphan"
-    )
+    cards = db.relationship("RetroCard", backref="retro", cascade="all, delete-orphan")
 
 
 class RetroParticipant(db.Model):
@@ -124,9 +125,7 @@ class RetroCard(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     author = db.relationship("User", backref="retro_cards")
-    likes = db.relationship(
-        "RetroLike", backref="card", cascade="all, delete-orphan"
-    )
+    likes = db.relationship("RetroLike", backref="card", cascade="all, delete-orphan")
     comments = db.relationship(
         "RetroComment",
         backref="card",
@@ -141,9 +140,7 @@ class RetroLike(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    __table_args__ = (
-        db.UniqueConstraint("card_id", "user_id", name="uq_retro_like"),
-    )
+    __table_args__ = (db.UniqueConstraint("card_id", "user_id", name="uq_retro_like"),)
 
 
 class RetroComment(db.Model):
@@ -202,7 +199,9 @@ class Team(db.Model):
     created_by = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    creator = db.relationship("User", foreign_keys=[created_by], backref="created_teams")
+    creator = db.relationship(
+        "User", foreign_keys=[created_by], backref="created_teams"
+    )
     members = db.relationship(
         "TeamMember", backref="team", cascade="all, delete-orphan"
     )
@@ -218,9 +217,7 @@ class TeamMember(db.Model):
 
     user = db.relationship("User", backref="team_memberships")
 
-    __table_args__ = (
-        db.UniqueConstraint("team_id", "user_id", name="uq_team_member"),
-    )
+    __table_args__ = (db.UniqueConstraint("team_id", "user_id", name="uq_team_member"),)
 
 
 class Ticket(db.Model):
@@ -239,10 +236,17 @@ class Ticket(db.Model):
         db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
     )
 
-    assignee = db.relationship("User", foreign_keys=[assignee_id], backref="assigned_tickets")
-    reporter = db.relationship("User", foreign_keys=[reporter_id], backref="reported_tickets")
+    assignee = db.relationship(
+        "User", foreign_keys=[assignee_id], backref="assigned_tickets"
+    )
+    reporter = db.relationship(
+        "User", foreign_keys=[reporter_id], backref="reported_tickets"
+    )
     subtasks = db.relationship(
-        "Subtask", backref="ticket", cascade="all, delete-orphan", order_by="Subtask.created_at"
+        "Subtask",
+        backref="ticket",
+        cascade="all, delete-orphan",
+        order_by="Subtask.created_at",
     )
     comments = db.relationship(
         "TicketComment",
@@ -414,10 +418,18 @@ class Incident(db.Model):
     )
 
     team = db.relationship("Team", backref="incidents")
-    commander = db.relationship("User", foreign_keys=[commander_id], backref="commanded_incidents")
-    on_call_user = db.relationship("User", foreign_keys=[on_call_user_id], backref="on_call_incidents")
-    reporter = db.relationship("User", foreign_keys=[reporter_id], backref="reported_incidents")
-    ticket = db.relationship("Ticket", backref="linked_incident", foreign_keys=[ticket_id])
+    commander = db.relationship(
+        "User", foreign_keys=[commander_id], backref="commanded_incidents"
+    )
+    on_call_user = db.relationship(
+        "User", foreign_keys=[on_call_user_id], backref="on_call_incidents"
+    )
+    reporter = db.relationship(
+        "User", foreign_keys=[reporter_id], backref="reported_incidents"
+    )
+    ticket = db.relationship(
+        "Ticket", backref="linked_incident", foreign_keys=[ticket_id]
+    )
     events = db.relationship(
         "IncidentEvent",
         backref="incident",
@@ -432,7 +444,9 @@ class Incident(db.Model):
     )
 
     __table_args__ = (
-        db.UniqueConstraint("team_id", "incident_number", name="uq_team_incident_number"),
+        db.UniqueConstraint(
+            "team_id", "incident_number", name="uq_team_incident_number"
+        ),
     )
 
     @property
@@ -466,7 +480,9 @@ class IncidentEvent(db.Model):
 
 class Postmortem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    incident_id = db.Column(db.Integer, db.ForeignKey("incident.id"), nullable=False, unique=True)
+    incident_id = db.Column(
+        db.Integer, db.ForeignKey("incident.id"), nullable=False, unique=True
+    )
     title = db.Column(db.String(200), nullable=False)
     status = db.Column(db.String(20), default="draft", nullable=False)
     summary = db.Column(db.Text)
@@ -497,7 +513,9 @@ class Postmortem(db.Model):
 
 class PostmortemActionItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    postmortem_id = db.Column(db.Integer, db.ForeignKey("postmortem.id"), nullable=False)
+    postmortem_id = db.Column(
+        db.Integer, db.ForeignKey("postmortem.id"), nullable=False
+    )
     title = db.Column(db.String(200), nullable=False)
     owner_id = db.Column(db.Integer, db.ForeignKey("user.id"))
     due_date = db.Column(db.Date)
@@ -540,9 +558,18 @@ WHEEL_NAME_STATUSES = {
 }
 
 WHEEL_COLORS = [
-    "#5b21b6", "#ec4899", "#f97316", "#34d399", "#38bdf8",
-    "#fde047", "#ef4444", "#8b5cf6", "#14b8a6", "#f59e0b",
-    "#6366f1", "#84cc16",
+    "#5b21b6",
+    "#ec4899",
+    "#f97316",
+    "#34d399",
+    "#38bdf8",
+    "#fde047",
+    "#ef4444",
+    "#8b5cf6",
+    "#14b8a6",
+    "#f59e0b",
+    "#6366f1",
+    "#84cc16",
 ]
 
 
@@ -611,7 +638,9 @@ class SpeakWheelName(db.Model):
 class SpeakWheelPick(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     wheel_id = db.Column(db.Integer, db.ForeignKey("speak_wheel.id"), nullable=False)
-    name_id = db.Column(db.Integer, db.ForeignKey("speak_wheel_name.id"), nullable=False)
+    name_id = db.Column(
+        db.Integer, db.ForeignKey("speak_wheel_name.id"), nullable=False
+    )
     picked_by = db.Column(db.Integer, db.ForeignKey("user.id"))
     picked_at = db.Column(db.DateTime, default=datetime.utcnow)
 

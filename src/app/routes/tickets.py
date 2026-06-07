@@ -222,7 +222,9 @@ def create_ticket():
     )
 
 
-def _log_ticket_activity(ticket, activity_type, field_name=None, old_value=None, new_value=None, content=None):
+def _log_ticket_activity(
+    ticket, activity_type, field_name=None, old_value=None, new_value=None, content=None
+):
     db.session.add(
         TicketActivity(
             ticket_id=ticket.id,
@@ -252,13 +254,18 @@ def view_ticket(ticket_id):
     )
     timeline = []
     for comment in ticket_comments:
-        timeline.append({"type": "comment", "item": comment, "created_at": comment.created_at})
+        timeline.append(
+            {"type": "comment", "item": comment, "created_at": comment.created_at}
+        )
     for activity in activities:
-        timeline.append({"type": "activity", "item": activity, "created_at": activity.created_at})
+        timeline.append(
+            {"type": "activity", "item": activity, "created_at": activity.created_at}
+        )
     timeline.sort(key=lambda x: x["created_at"])
 
     linked_incident = None
     from app.models.models import Incident
+
     linked_incident = Incident.query.filter_by(ticket_id=ticket.id).first()
 
     return render_template(
@@ -293,21 +300,27 @@ def update_ticket(ticket_id):
 
     if status in TICKET_STATUSES and status != ticket.status:
         _log_ticket_activity(
-            ticket, "status_change", "status",
+            ticket,
+            "status_change",
+            "status",
             TICKET_STATUSES[ticket.status]["label"],
             TICKET_STATUSES[status]["label"],
         )
         ticket.status = status
     if priority in TICKET_PRIORITIES and priority != ticket.priority:
         _log_ticket_activity(
-            ticket, "field_change", "priority",
+            ticket,
+            "field_change",
+            "priority",
             TICKET_PRIORITIES[ticket.priority]["label"],
             TICKET_PRIORITIES[priority]["label"],
         )
         ticket.priority = priority
     if issue_type in TICKET_TYPES and issue_type != ticket.issue_type:
         _log_ticket_activity(
-            ticket, "field_change", "type",
+            ticket,
+            "field_change",
+            "type",
             TICKET_TYPES[ticket.issue_type]["label"],
             TICKET_TYPES[issue_type]["label"],
         )
@@ -322,6 +335,7 @@ def update_ticket(ticket_id):
     new_assignee = "Unassigned"
     if assignee_id:
         from app.models.models import User
+
         user = User.query.get(assignee_id)
         new_assignee = user.label if user else "Unassigned"
     if (ticket.assignee_id or None) != assignee_id:
@@ -398,7 +412,10 @@ def update_subtask(subtask_id):
         subtask.status = status
 
     assignee_id = int(assignee_id_raw) if assignee_id_raw.isdigit() else None
-    if assignee_id and validate_assignee_for_team(subtask.ticket.team_id, assignee_id) is False:
+    if (
+        assignee_id
+        and validate_assignee_for_team(subtask.ticket.team_id, assignee_id) is False
+    ):
         flash("Assignee must be a member of this ticket's team.", "error")
         return redirect(url_for("tickets.view_ticket", ticket_id=subtask.ticket_id))
 

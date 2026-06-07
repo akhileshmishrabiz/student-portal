@@ -58,7 +58,16 @@ def create_app():
         return response
 
     with app.app_context():
-        from app.routes import routes, auth, retro, tickets, teams, incidents, postmortems, wheel
+        from app.routes import (
+            routes,
+            auth,
+            retro,
+            tickets,
+            teams,
+            incidents,
+            postmortems,
+            wheel,
+        )
         from app.models import models  # noqa: F401 — register models before create_all
         from app.seed import (
             backfill_ticket_teams,
