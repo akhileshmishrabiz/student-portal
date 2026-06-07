@@ -1,0 +1,11 @@
+quiet: false
+compact: false
+download-external-modules: true
+
+skip-path:
+  - ecs-infra/.terraform
+  - k8s/terraform/.terraform
+
+skip-check:
+  # CKV_AWS_144: ECR repository not encrypted with KMS — acceptable for dev/bootcamp
+  - CKV_AWS_144

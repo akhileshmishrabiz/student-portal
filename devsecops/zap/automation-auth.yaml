@@ -1,0 +1,63 @@
+# OWASP ZAP Automation Framework — authenticated DAST scan.
+# Target host must be reachable from the ZAP container (172.17.0.1 on Linux CI).
+---
+env:
+  contexts:
+    - name: student-portal
+      urls:
+        - "${TARGET_URL}"
+      includePaths:
+        - "${TARGET_URL}.*"
+      excludePaths:
+        - "${TARGET_URL}/logout.*"
+        - "${TARGET_URL}/metrics.*"
+      authentication:
+        method: form
+        parameters:
+          loginUrl: "${TARGET_URL}/login"
+          loginRequestData: "username={%username%}&password={%password%}"
+        users:
+          - name: admin
+            credentials:
+              username: "${DAST_USERNAME}"
+              password: "${DAST_PASSWORD}"
+        verification:
+          method: response
+          pollFrequency: 60
+          pollUnits: requests
+          pollUrl: "${TARGET_URL}/"
+          pollPostData: ""
+  parameters:
+    failOnWarning: false
+    failOnError: false
+
+jobs:
+  - type: spider
+    parameters:
+      context: student-portal
+      user: admin
+      maxDuration: 10
+      url: "${TARGET_URL}"
+
+  - type: passiveScan-wait
+    parameters:
+      maxDuration: 10
+
+  - type: activeScan
+    parameters:
+      context: student-portal
+      user: admin
+      maxRuleDurationInMins: 5
+      maxScanDurationInMins: 15
+
+  - type: report
+    parameters:
+      template: traditional-html
+      reportDir: /zap/wrk/
+      reportFile: zap-auth-report.html
+
+  - type: report
+    parameters:
+      template: sarif-json
+      reportDir: /zap/wrk/
+      reportFile: zap-auth-report.sarif

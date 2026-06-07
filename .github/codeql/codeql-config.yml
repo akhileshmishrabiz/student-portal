@@ -1,0 +1,16 @@
+name: "Student Portal CodeQL"
+
+paths:
+  - src/app
+  - src/run.py
+  - src/config.py
+
+paths-ignore:
+  - src/tests
+  - "**/__pycache__"
+
+query-filters:
+  - exclude:
+      tags contain:
+        - maintenance
+        - experimental

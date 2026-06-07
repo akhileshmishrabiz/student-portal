@@ -1,0 +1,165 @@
+name: DevSecOps - GitHub Security
+
+on:
+  # pull_request:
+  #   branches: [main]
+  # push:
+  #   branches: [main]
+  # schedule:
+  #   - cron: "30 2 * * 1"
+  workflow_dispatch:
+
+concurrency:
+  group: devsecops-github-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+  pull-requests: write
+
+jobs:
+  codeql:
+    name: CodeQL (GitHub SAST)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [python]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          config-file: ./.github/codeql/codeql-config.yml
+          queries: +security-extended,security-and-quality
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: src/requirements.txt
+
+      - name: Install Python dependencies
+        working-directory: src
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: /language:${{ matrix.language }}
+          output: sarif-results
+          upload: true
+
+  dependency-review:
+    name: Dependency Review (PR)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: moderate
+          comment-summary-in-pr: always
+          deny-licenses: GPL-2.0-only, GPL-3.0-only, AGPL-3.0-only
+
+  dependency-graph:
+    name: Dependency Graph Submission
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Submit dependencies to GitHub Dependency Graph
+        uses: advanced-security/component-detection-dependency-submission-action@v0.1.1
+        with:
+          detectorsFilter: Pip,Dockerfile
+          detectorArgs: Pip=EnableIfDefaultOff,Dockerfile=EnableIfDefaultOff
+
+  secret-scanning-results:
+    name: Secret Scanning Summary
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Scan for known secret patterns in diff
+        run: |
+          set -euo pipefail
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+
+          PATTERNS=(
+            'AKIA[0-9A-Z]{16}'
+            'BEGIN (RSA |OPENSSH |EC )?PRIVATE KEY'
+            'ghp_[A-Za-z0-9]{36}'
+            'github_pat_[A-Za-z0-9_]{82}'
+            'xox[baprs]-[A-Za-z0-9-]{10,}'
+          )
+
+          FOUND=0
+          for pattern in "${PATTERNS[@]}"; do
+            if git diff "$BASE_SHA" "$HEAD_SHA" | grep -Ei "$pattern" > /dev/null; then
+              echo "::warning::Potential secret pattern detected matching: $pattern"
+              FOUND=1
+            fi
+          done
+
+          if [ "$FOUND" -eq 1 ]; then
+            echo "::error::Potential secrets found in PR diff. Rotate credentials and use GitHub Secrets."
+            exit 1
+          fi
+
+          echo "No obvious secret patterns detected in PR diff."
+
+  github-actions-lint:
+    name: GitHub Actions Workflow Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: actionlint
+        run: |
+          curl -sSL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash | bash
+          ./actionlint -color .github/workflows/devsecops-github.yaml
+
+  security-policy-check:
+    name: Security Policy Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify SECURITY.md exists
+        run: |
+          if [ ! -f SECURITY.md ]; then
+            echo "::warning::SECURITY.md is missing. Add one so researchers know how to report vulnerabilities."
+          else
+            echo "SECURITY.md found."
+          fi
+
+      - name: Verify Dependabot config
+        run: |
+          test -f .github/dependabot.yml
+          echo "Dependabot configuration present."
