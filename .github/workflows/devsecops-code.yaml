@@ -111,7 +111,7 @@ jobs:
           failure-threshold: warning
 
       - name: Trivy config scan
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@0.36.0
         with:
           scan-type: config
           scan-ref: src
@@ -166,7 +166,7 @@ jobs:
         run: docker build -t student-portal:${{ github.sha }} src
 
       - name: Trivy image scan
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@0.36.0
         with:
           image-ref: student-portal:${{ github.sha }}
           format: table
