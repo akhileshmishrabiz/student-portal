@@ -6,7 +6,7 @@ Flask-WTF
 WTForms
 flask-login
 Werkzeug
-bcrypt = 4.2.1
+bcrypt==4.2.1
 prometheus-client
 python-json-logger
 gunicorn              
