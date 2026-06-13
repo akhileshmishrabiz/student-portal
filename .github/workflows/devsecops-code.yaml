@@ -44,16 +44,16 @@
 name: DevSecOps - Code
 
 on:
-  pull_request:
-    branches: [main]
-    paths:
-      - "src/**"
-      - ".github/workflows/devsecops-code.yaml"
-  push:
-    branches: [main]
-    paths:
-      - "src/**"
-      - ".github/workflows/devsecops-code.yaml"
+  # pull_request:
+  #   branches: [main]
+  #   paths:
+  #     - "src/**"
+  #     - ".github/workflows/devsecops-code.yaml"
+  # push:
+  #   branches: [main]
+  #   paths:
+  #     - "src/**"
+  #     - ".github/workflows/devsecops-code.yaml"
   workflow_dispatch:
 
 concurrency:
