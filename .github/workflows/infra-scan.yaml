@@ -1,0 +1,23 @@
+name: terraform-infra-scan
+
+on:
+  workflow_dispatch:
+
+env:
+  path: "ecs-infra"
+
+
+
+jobs:  
+  terraform-infra-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4 
+
+
+      - name: Checkov GitHub Action
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: ${{ env.path }}
+          quiet: true
