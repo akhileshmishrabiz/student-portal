@@ -201,8 +201,10 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      # projectBaseDir: src writes scanner output to src/.scannerwork/
+      # projectBaseDir: src — report-task.txt is written to .scannerwork/ at repo root
+      # (see sonar.working.directory in src/sonar-project.properties)
       - name: SonarQube Scan
+        id: sonar-scan
         uses: SonarSource/sonarqube-scan-action@v4
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -210,20 +212,33 @@ jobs:
         with:
           projectBaseDir: src
 
-      - name: Verify scanner report exists
+      - name: Locate report-task.txt
+        if: always() && steps.sonar-scan.outcome == 'success'
         run: |
-          if [ ! -f src/.scannerwork/report-task.txt ]; then
-            echo "::error::SonarQube scan did not produce src/.scannerwork/report-task.txt"
-            find . -name report-task.txt 2>/dev/null || true
-            exit 1
+          mkdir -p .scannerwork
+          if [ -f .scannerwork/report-task.txt ]; then
+            echo "Found .scannerwork/report-task.txt"
+          elif [ -f src/.scannerwork/report-task.txt ]; then
+            cp src/.scannerwork/report-task.txt .scannerwork/report-task.txt
+            echo "Copied from src/.scannerwork/report-task.txt"
+          else
+            REPORT="$(find . -name report-task.txt -type f | head -1)"
+            if [ -n "${REPORT}" ]; then
+              cp "${REPORT}" .scannerwork/report-task.txt
+              echo "Copied from ${REPORT}"
+            else
+              echo "::error::report-task.txt not found after SonarQube scan. Check SonarQube Scan step logs."
+              exit 1
+            fi
           fi
-          cat src/.scannerwork/report-task.txt
+          echo "--- report-task.txt ---"
+          cat .scannerwork/report-task.txt
 
       - name: SonarQube Quality Gate
-        uses: SonarSource/sonarqube-quality-gate-action@v1
+        uses: SonarSource/sonarqube-quality-gate-action@v1.2
         timeout-minutes: 5
         with:
-          scanMetadataReportFile: src/.scannerwork/report-task.txt
+          pollingTimeoutSec: 600
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}

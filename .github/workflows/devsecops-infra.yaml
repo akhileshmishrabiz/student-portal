@@ -191,6 +191,7 @@ jobs:
           fetch-depth: 0
 
       - name: SonarQube Scan
+        id: sonar-scan
         uses: SonarSource/sonarqube-scan-action@v4
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -198,11 +199,29 @@ jobs:
         with:
           projectBaseDir: ecs-infra
 
+      - name: Locate report-task.txt
+        if: always() && steps.sonar-scan.outcome == 'success'
+        run: |
+          mkdir -p ecs-infra/.scannerwork
+          if [ -f ecs-infra/.scannerwork/report-task.txt ]; then
+            echo "Found ecs-infra/.scannerwork/report-task.txt"
+          else
+            REPORT="$(find ecs-infra -name report-task.txt -type f | head -1)"
+            if [ -n "${REPORT}" ]; then
+              cp "${REPORT}" ecs-infra/.scannerwork/report-task.txt
+            else
+              echo "::error::report-task.txt not found after ECS SonarQube scan"
+              exit 1
+            fi
+          fi
+          cat ecs-infra/.scannerwork/report-task.txt
+
       - name: SonarQube Quality Gate
         uses: SonarSource/sonarqube-quality-gate-action@v1
         timeout-minutes: 5
         with:
           scanMetadataReportFile: ecs-infra/.scannerwork/report-task.txt
+          pollingTimeoutSec: 600
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
@@ -217,6 +236,7 @@ jobs:
           fetch-depth: 0
 
       - name: SonarQube Scan
+        id: sonar-scan
         uses: SonarSource/sonarqube-scan-action@v4
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -224,11 +244,29 @@ jobs:
         with:
           projectBaseDir: k8s
 
+      - name: Locate report-task.txt
+        if: always() && steps.sonar-scan.outcome == 'success'
+        run: |
+          mkdir -p k8s/.scannerwork
+          if [ -f k8s/.scannerwork/report-task.txt ]; then
+            echo "Found k8s/.scannerwork/report-task.txt"
+          else
+            REPORT="$(find k8s -name report-task.txt -type f | head -1)"
+            if [ -n "${REPORT}" ]; then
+              cp "${REPORT}" k8s/.scannerwork/report-task.txt
+            else
+              echo "::error::report-task.txt not found after K8s SonarQube scan"
+              exit 1
+            fi
+          fi
+          cat k8s/.scannerwork/report-task.txt
+
       - name: SonarQube Quality Gate
         uses: SonarSource/sonarqube-quality-gate-action@v1
         timeout-minutes: 5
         with:
           scanMetadataReportFile: k8s/.scannerwork/report-task.txt
+          pollingTimeoutSec: 600
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
