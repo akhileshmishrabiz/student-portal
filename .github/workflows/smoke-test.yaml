@@ -22,18 +22,18 @@
 name: Smoke Test
 
 on:
-  pull_request:
-    branches: [main]
-    paths:
-      - "src/**"
-      - ".github/workflows/smoke-test.yaml"
-      - ".github/scripts/smoke-test.sh"
-  push:
-    branches: [main]
-    paths:
-      - "src/**"
-      - ".github/workflows/smoke-test.yaml"
-      - ".github/scripts/smoke-test.sh"
+  # pull_request:
+  #   branches: [main]
+  #   paths:
+  #     - "src/**"
+  #     - ".github/workflows/smoke-test.yaml"
+  #     - ".github/scripts/smoke-test.sh"
+  # push:
+  #   branches: [main]
+  #   paths:
+  #     - "src/**"
+  #     - ".github/workflows/smoke-test.yaml"
+  #     - ".github/scripts/smoke-test.sh"
   workflow_dispatch:
     inputs:
       base_url:

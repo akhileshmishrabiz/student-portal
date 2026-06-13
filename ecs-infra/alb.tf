@@ -3,6 +3,8 @@ resource "aws_lb" "alb" {
   subnets            = [aws_subnet.public_1.id, aws_subnet.public_2.id]
   load_balancer_type = "application"
   security_groups    = [aws_security_group.lb.id]
+  enable_deletion_protection = true
+  drop_invalid_header_fields = true
 
   tags = {
     Environment = var.environment

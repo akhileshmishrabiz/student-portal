@@ -5,6 +5,7 @@
 
 # ecs cluster
 resource "aws_ecs_cluster" "main" {
+  # checkov:skip=CKV_AWS_65: dont want to pay for this
   name = "${var.environment}-${var.app_name}-cluster"
 }
 
