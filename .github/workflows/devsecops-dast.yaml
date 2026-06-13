@@ -140,7 +140,8 @@ jobs:
               devsecops/zap/automation-auth.yaml > devsecops/zap/automation-auth.resolved.yaml
 
       - name: OWASP ZAP Authenticated Scan
-        uses: zaproxy/action-af@v0.15.0
+        uses: zaproxy/action-af@v0.3.0
+
         with:
           target: ${{ env.DAST_TARGET }}
           fail_action: true
