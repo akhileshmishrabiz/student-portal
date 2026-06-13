@@ -40,7 +40,7 @@ permissions:
 
 env:
   APP_PORT: "8000"
-  DAST_TARGET: http://172.17.0.1:8000
+  DAST_TARGET: http://35.154.27.18:8000
   DAST_USERNAME: livingdevops
   DAST_PASSWORD: LivingDevops1!
 

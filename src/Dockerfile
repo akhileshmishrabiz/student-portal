@@ -1,28 +1,38 @@
-# Use the official Python image from the Docker Hub
-FROM python:3.14-slim
+# Alpine-based runtime: smaller attack surface, fewer Debian perl/ncurses packages.
+FROM python:3.13-alpine AS builder
 
-# Set the working directory in the container
 WORKDIR /app
 
-# Copy the current directory contents into the container at /app
-COPY requirements.txt /app
+RUN apk add --no-cache gcc musl-dev libpq-dev
 
-# Install any needed packages specified in requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+COPY requirements.txt .
+RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
 
-# Copy the app code
+
+FROM python:3.13-alpine
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    FLASK_APP=app.py \
+    FLASK_RUN_PORT=8000
+
+RUN apk add --no-cache libpq ca-certificates && \
+    apk upgrade --no-cache && \
+    rm -rf /var/cache/apk/* /tmp/*
+
+WORKDIR /app
+
+COPY --from=builder /install /usr/local
 COPY . /app
 
-# Make port 8000 available to the world outside this container
+RUN adduser -D -u 1000 appuser && \
+    chown -R appuser:appuser /app
+
+USER appuser
+
 EXPOSE 8000
-
-# Define environment variable
-ENV FLASK_APP=app.py
-ENV FLASK_RUN_PORT=8000
-
-USER 1000
-# Run app.py when the container launches
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "run:app"]
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
   CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')" || exit 1
+
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "run:app"]

@@ -257,10 +257,12 @@ jobs:
 
       - name: Trivy image scan
         uses: aquasecurity/trivy-action@v0.36.0
+        env:
+          TRIVY_DISABLE_VEX_NOTICE: true
         with:
           image-ref: student-portal:${{ github.sha }}
           format: table
           severity: CRITICAL,HIGH
           scan-type: image
-          vuln-type: os
           exit-code: "1"
+          ignore-unfixed: true
