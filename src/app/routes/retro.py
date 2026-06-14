@@ -3,6 +3,7 @@ import uuid
 
 from flask import Blueprint, flash, jsonify, redirect, render_template, request, url_for
 from flask_login import current_user, login_required, login_user
+from sqlalchemy.orm import joinedload
 
 from app.models.models import (
     RETRO_CATEGORIES,
@@ -55,27 +56,27 @@ def _ensure_participant(retro):
         db.session.commit()
 
 
-def _liked_card_ids():
+def _liked_card_ids_for_retro(retro_id):
     if not current_user.is_authenticated:
         return set()
     return {
         like.card_id
-        for like in RetroLike.query.filter_by(user_id=current_user.id).all()
+        for like in RetroLike.query.join(RetroCard, RetroLike.card_id == RetroCard.id)
+        .filter(
+            RetroCard.retro_id == retro_id,
+            RetroLike.user_id == current_user.id,
+        )
+        .all()
     }
 
 
 def _card_item(card, liked_ids=None):
-    liked_ids = liked_ids if liked_ids is not None else _liked_card_ids()
+    liked_ids = liked_ids if liked_ids is not None else _liked_card_ids_for_retro(card.retro_id)
     return {
         "card": card,
         "like_count": len(card.likes),
         "liked_by_me": card.id in liked_ids,
     }
-
-
-def _card_context(cards):
-    liked_ids = _liked_card_ids()
-    return [_card_item(card, liked_ids) for card in cards]
 
 
 def _wants_json():
@@ -102,14 +103,17 @@ def _json_error(message, status=400):
 
 
 def _board_context(retro):
-    cards_by_category = {}
-    for key in RETRO_CATEGORIES:
-        cards = (
-            RetroCard.query.filter_by(retro_id=retro.id, category=key)
-            .order_by(RetroCard.created_at.desc())
-            .all()
-        )
-        cards_by_category[key] = _card_context(cards)
+    cards = (
+        RetroCard.query.filter_by(retro_id=retro.id)
+        .options(joinedload(RetroCard.likes))
+        .order_by(RetroCard.created_at.desc())
+        .all()
+    )
+    cards_by_category = {key: [] for key in RETRO_CATEGORIES}
+    liked_ids = _liked_card_ids_for_retro(retro.id)
+    for card in cards:
+        if card.category in cards_by_category:
+            cards_by_category[card.category].append(_card_item(card, liked_ids))
 
     participants = (
         RetroParticipant.query.filter_by(retro_id=retro.id)

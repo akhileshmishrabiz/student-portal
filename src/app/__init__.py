@@ -15,6 +15,8 @@ db = SQLAlchemy()
 login_manager = LoginManager()
 logger = setup_logging()
 
+_SLOW_REQUEST_SECONDS = float(os.getenv("SLOW_REQUEST_SECONDS", "1.0"))
+
 
 def create_app():
     app = Flask(__name__)
@@ -24,6 +26,10 @@ def create_app():
     db.init_app(app)
     login_manager.init_app(app)
     login_manager.login_view = "auth.login"
+
+    @app.teardown_appcontext
+    def close_db_session(_exception=None):
+        db.session.remove()
 
     # Add Prometheus middleware
     app.wsgi_app = DispatcherMiddleware(app.wsgi_app, {"/metrics": make_wsgi_app()})
@@ -45,15 +51,16 @@ def create_app():
 
             request_duration_seconds.labels(endpoint=endpoint).observe(duration)
 
-            logger.info(
-                "Request processed",
-                extra={
-                    "method": request.method,
-                    "path": request.path,
-                    "status": response.status_code,
-                    "duration": duration,
-                },
-            )
+            if duration >= _SLOW_REQUEST_SECONDS or app.debug:
+                logger.info(
+                    "Request processed",
+                    extra={
+                        "method": request.method,
+                        "path": request.path,
+                        "status": response.status_code,
+                        "duration": duration,
+                    },
+                )
 
         return response
 
@@ -70,14 +77,10 @@ def create_app():
         )
         from app.models import models  # noqa: F401 — register models before create_all
         from app.seed import (
-            backfill_ticket_teams,
             ensure_schema,
+            is_devops_data_seeded,
+            run_devops_seed,
             seed_admin_users,
-            seed_devops_incidents,
-            seed_devops_retros,
-            seed_devops_teams,
-            seed_devops_tickets,
-            seed_devops_wheels,
         )
 
         app.register_blueprint(routes.bp)
@@ -92,12 +95,8 @@ def create_app():
         db.create_all()
         ensure_schema()
         seed_admin_users()
-        team_by_key = seed_devops_teams()
-        seed_devops_retros()
-        seed_devops_tickets(team_by_key)
-        seed_devops_incidents(team_by_key)
-        seed_devops_wheels(team_by_key)
-        backfill_ticket_teams()
+        if not is_devops_data_seeded():
+            run_devops_seed()
 
         @app.context_processor
         def inject_nav():

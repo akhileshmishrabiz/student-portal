@@ -20,10 +20,12 @@ from app.routes.team_helpers import (
     get_ticket_for_user,
     next_ticket_number,
     team_member_users,
+    team_member_users_for_teams,
     user_team_ids,
     user_teams,
     validate_assignee_for_team,
 )
+from app.query_options import ticket_list_options
 
 tickets_bp = Blueprint("tickets", __name__, url_prefix="/tickets")
 
@@ -68,6 +70,19 @@ def _apply_ticket_filters(query):
     return query
 
 
+def _status_counts(base_query, status_keys):
+    rows = (
+        base_query.with_entities(Ticket.status, func.count(Ticket.id))
+        .group_by(Ticket.status)
+        .all()
+    )
+    counts = {key: 0 for key in status_keys}
+    for status, count in rows:
+        if status in counts:
+            counts[status] = count
+    return counts, sum(counts.values())
+
+
 def _selected_team(team_id_raw):
     teams = user_teams()
     if not teams:
@@ -110,12 +125,13 @@ def list_tickets():
 
     base_query = accessible_tickets_query()
     query = _apply_ticket_filters(base_query)
-    tickets = query.order_by(Ticket.updated_at.desc()).all()
+    tickets = (
+        query.options(*ticket_list_options())
+        .order_by(Ticket.updated_at.desc())
+        .all()
+    )
 
-    status_counts = {}
-    for key in TICKET_STATUSES:
-        status_counts[key] = base_query.filter(Ticket.status == key).count()
-    total_ticket_count = base_query.count()
+    status_counts, total_ticket_count = _status_counts(base_query, TICKET_STATUSES)
 
     team_id = request.args.get("team_id", "").strip()
     my_team_ids = set(user_team_ids())
@@ -123,12 +139,7 @@ def list_tickets():
     if team_id.isdigit() and int(team_id) in my_team_ids:
         assignee_users = team_member_users(int(team_id))
     if not assignee_users:
-        seen = set()
-        for team in teams:
-            for user in team_member_users(team.id):
-                if user.id not in seen:
-                    assignee_users.append(user)
-                    seen.add(user.id)
+        assignee_users = team_member_users_for_teams([team.id for team in teams])
 
     return render_template(
         "tickets/list.html",

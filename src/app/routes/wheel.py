@@ -15,6 +15,7 @@ from app.models.models import (
 )
 from app.routes.helpers import new_share_token
 from app.routes.team_helpers import get_team_for_user, team_member_users, user_teams
+from app.query_options import wheel_detail_options
 
 wheel_bp = Blueprint("wheel", __name__, url_prefix="/wheel")
 
@@ -46,7 +47,15 @@ def _json_error(message, status=400):
 
 
 def _wheel_by_token(token):
-    return SpeakWheel.query.filter_by(share_token=token).first_or_404()
+    return (
+        SpeakWheel.query.filter_by(share_token=token)
+        .options(*wheel_detail_options())
+        .first_or_404()
+    )
+
+
+def _get_wheel(wheel_id):
+    return SpeakWheel.query.options(*wheel_detail_options()).get_or_404(wheel_id)
 
 
 def _share_url(wheel):
@@ -218,7 +227,7 @@ def create_wheel():
 @wheel_bp.route("/<int:wheel_id>")
 @login_required
 def view_wheel(wheel_id):
-    wheel = SpeakWheel.query.get_or_404(wheel_id)
+    wheel = _get_wheel(wheel_id)
     return render_template(
         "wheel/board.html",
         wheel=wheel,
@@ -244,14 +253,14 @@ def watch_wheel(token):
 
 @wheel_bp.route("/<int:wheel_id>/state")
 def wheel_state(wheel_id):
-    wheel = SpeakWheel.query.get_or_404(wheel_id)
+    wheel = _get_wheel(wheel_id)
     return jsonify({"ok": True, **_wheel_state(wheel)})
 
 
 @wheel_bp.route("/<int:wheel_id>/names", methods=["POST"])
 @login_required
 def add_names(wheel_id):
-    wheel = SpeakWheel.query.get_or_404(wheel_id)
+    wheel = _get_wheel(wheel_id)
     if not _can_facilitate(wheel):
         return _json_error("Only the facilitator can manage names.", 403)
 
@@ -280,7 +289,7 @@ def add_names(wheel_id):
 @wheel_bp.route("/<int:wheel_id>/spin", methods=["POST"])
 @login_required
 def spin_wheel(wheel_id):
-    wheel = SpeakWheel.query.get_or_404(wheel_id)
+    wheel = _get_wheel(wheel_id)
     if not _can_facilitate(wheel):
         return _json_error("Only the facilitator can spin.", 403)
 
@@ -324,7 +333,7 @@ def spin_wheel(wheel_id):
 @wheel_bp.route("/<int:wheel_id>/names/<int:name_id>/absent", methods=["POST"])
 @login_required
 def mark_absent(wheel_id, name_id):
-    wheel = SpeakWheel.query.get_or_404(wheel_id)
+    wheel = _get_wheel(wheel_id)
     if not _can_facilitate(wheel):
         return _json_error("Only the facilitator can update names.", 403)
 
@@ -340,7 +349,7 @@ def mark_absent(wheel_id, name_id):
 @wheel_bp.route("/<int:wheel_id>/names/<int:name_id>/remove", methods=["POST"])
 @login_required
 def remove_name(wheel_id, name_id):
-    wheel = SpeakWheel.query.get_or_404(wheel_id)
+    wheel = _get_wheel(wheel_id)
     if not _can_facilitate(wheel):
         return _json_error("Only the facilitator can update names.", 403)
 
@@ -356,7 +365,7 @@ def remove_name(wheel_id, name_id):
 @wheel_bp.route("/<int:wheel_id>/reset", methods=["POST"])
 @login_required
 def reset_wheel(wheel_id):
-    wheel = SpeakWheel.query.get_or_404(wheel_id)
+    wheel = _get_wheel(wheel_id)
     if not _can_facilitate(wheel):
         return _json_error("Only the facilitator can reset.", 403)
 
@@ -375,7 +384,7 @@ def reset_wheel(wheel_id):
 @wheel_bp.route("/<int:wheel_id>/shuffle", methods=["POST"])
 @login_required
 def shuffle_wheel(wheel_id):
-    wheel = SpeakWheel.query.get_or_404(wheel_id)
+    wheel = _get_wheel(wheel_id)
     if not _can_facilitate(wheel):
         return _json_error("Only the facilitator can shuffle.", 403)
 
@@ -393,7 +402,7 @@ def shuffle_wheel(wheel_id):
 @wheel_bp.route("/<int:wheel_id>/close", methods=["POST"])
 @login_required
 def close_wheel(wheel_id):
-    wheel = SpeakWheel.query.get_or_404(wheel_id)
+    wheel = _get_wheel(wheel_id)
     if not _can_facilitate(wheel):
         return _json_error("Only the facilitator can close.", 403)
 

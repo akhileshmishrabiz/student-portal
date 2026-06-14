@@ -2,7 +2,7 @@ from datetime import datetime
 
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
-from sqlalchemy import or_
+from sqlalchemy import func, or_
 
 from app import db
 from app.models.models import (
@@ -28,6 +28,7 @@ from app.routes.team_helpers import (
     user_teams,
     validate_assignee_for_team,
 )
+from app.query_options import incident_list_options
 
 incidents_bp = Blueprint("incidents", __name__, url_prefix="/incidents")
 
@@ -60,6 +61,19 @@ def _apply_incident_filters(query):
             )
         )
     return query
+
+
+def _status_counts(base_query, status_keys):
+    rows = (
+        base_query.with_entities(Incident.status, func.count(Incident.id))
+        .group_by(Incident.status)
+        .all()
+    )
+    counts = {key: 0 for key in status_keys}
+    for status, count in rows:
+        if status in counts:
+            counts[status] = count
+    return counts
 
 
 def _selected_team(team_id_raw):
@@ -105,14 +119,18 @@ def list_incidents():
 
     base_query = accessible_incidents_query()
     query = _apply_incident_filters(base_query)
-    incidents = query.order_by(Incident.updated_at.desc()).all()
+    incidents = (
+        query.options(*incident_list_options())
+        .order_by(Incident.updated_at.desc())
+        .all()
+    )
 
-    status_counts = {}
-    for key in INCIDENT_STATUSES:
-        status_counts[key] = base_query.filter(Incident.status == key).count()
-    active_count = base_query.filter(
-        Incident.status.notin_(["resolved", "postmortem_pending", "closed"])
-    ).count()
+    status_counts = _status_counts(base_query, INCIDENT_STATUSES)
+    active_count = sum(
+        count
+        for status, count in status_counts.items()
+        if status not in ("resolved", "postmortem_pending", "closed")
+    )
 
     return render_template(
         "incidents/list.html",

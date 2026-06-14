@@ -1,21 +1,27 @@
-# OWASP ZAP Automation Framework — authenticated DAST scan.
-# Target host must be reachable from the ZAP container (172.17.0.1 on Linux CI).
+# OWASP ZAP Automation Framework — authenticated DAST plan
+# Used by: zaproxy/action-af@v0.3.0  (plan input)
+#
+# Required env vars (passed via docker_env_vars in workflow):
+#   DAST_TARGET      e.g. http://35.154.27.18:8000
+#   DAST_USERNAME    e.g. livingdevops
+#   DAST_PASSWORD    e.g. LivingDevops1!
 ---
 env:
   contexts:
     - name: student-portal
       urls:
-        - "${TARGET_URL}"
+        - "${DAST_TARGET}"
       includePaths:
-        - "${TARGET_URL}.*"
+        - "${DAST_TARGET}.*"
       excludePaths:
-        - "${TARGET_URL}/logout.*"
-        - "${TARGET_URL}/metrics.*"
+        - "${DAST_TARGET}/logout.*"
+        - "${DAST_TARGET}/metrics.*"
       authentication:
         method: form
         parameters:
-          loginUrl: "${TARGET_URL}/login"
-          loginRequestData: "username={%username%}&password={%password%}"
+          loginPageUrl: "${DAST_TARGET}/login"
+          loginRequestUrl: "${DAST_TARGET}/login"
+          loginRequestBody: "username={%username%}&password={%password%}"
         users:
           - name: admin
             credentials:
@@ -25,11 +31,11 @@ env:
           method: response
           pollFrequency: 60
           pollUnits: requests
-          pollUrl: "${TARGET_URL}/"
-          pollPostData: ""
+          pollUrl: "${DAST_TARGET}/"
+          loggedInRegex: "Dashboard|Welcome back|retro"
   parameters:
     failOnWarning: false
-    failOnError: false
+    failOnError: true
 
 jobs:
   - type: spider
@@ -37,7 +43,7 @@ jobs:
       context: student-portal
       user: admin
       maxDuration: 10
-      url: "${TARGET_URL}"
+      url: "${DAST_TARGET}"
 
   - type: passiveScan-wait
     parameters:

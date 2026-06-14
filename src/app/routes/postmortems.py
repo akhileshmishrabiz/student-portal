@@ -7,6 +7,7 @@ from app import db
 from app.models.models import (
     INCIDENT_STATUSES,
     POSTMORTEM_STATUSES,
+    Incident,
     Postmortem,
     PostmortemActionItem,
     Ticket,
@@ -32,9 +33,7 @@ def require_full_account():
 def _accessible_postmortems():
     from app.routes.incident_helpers import accessible_incidents_query
 
-    incident_ids = [i.id for i in accessible_incidents_query().all()]
-    if not incident_ids:
-        return Postmortem.query.filter(Postmortem.id == -1)
+    incident_ids = accessible_incidents_query().with_entities(Incident.id)
     return Postmortem.query.filter(Postmortem.incident_id.in_(incident_ids))
 
 

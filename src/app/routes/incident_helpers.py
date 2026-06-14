@@ -3,9 +3,11 @@ from datetime import datetime
 from flask import abort
 from flask_login import current_user
 from sqlalchemy import func
+from sqlalchemy.orm import joinedload
 
 from app import db
 from app.models.models import Incident, OnCallSchedule
+from app.query_options import on_call_options
 
 
 def next_incident_number(team_id):
@@ -46,6 +48,7 @@ def current_on_call(team_id, role="primary", at=None):
             OnCallSchedule.start_at <= at,
             OnCallSchedule.end_at > at,
         )
+        .options(*on_call_options())
         .order_by(OnCallSchedule.start_at.desc())
         .first()
     )

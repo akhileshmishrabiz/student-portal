@@ -109,7 +109,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Only start a local container when scanning localhost (skip for remote EC2 URL)
       - name: Build and start application
+        if: contains(env.DAST_TARGET, 'localhost') || contains(env.DAST_TARGET, '127.0.0.1')
         run: |
           docker build -t student-portal-dast src
           docker run -d --name student-portal-dast \
@@ -120,6 +122,7 @@ jobs:
             student-portal-dast
 
       - name: Wait for application health
+        if: contains(env.DAST_TARGET, 'localhost') || contains(env.DAST_TARGET, '127.0.0.1')
         run: |
           for i in $(seq 1 30); do
             if curl -sf "http://localhost:${{ env.APP_PORT }}/health"; then
@@ -132,21 +135,26 @@ jobs:
           docker logs student-portal-dast
           exit 1
 
-      - name: Prepare ZAP automation config
+      - name: Verify DAST target is reachable
         run: |
-          sed -e "s|\${TARGET_URL}|${{ env.DAST_TARGET }}|g" \
-              -e "s|\${DAST_USERNAME}|${{ env.DAST_USERNAME }}|g" \
-              -e "s|\${DAST_PASSWORD}|${{ env.DAST_PASSWORD }}|g" \
-              devsecops/zap/automation-auth.yaml > devsecops/zap/automation-auth.resolved.yaml
+          curl -sf "${{ env.DAST_TARGET }}/health" || {
+            echo "::error::Cannot reach DAST target at ${{ env.DAST_TARGET }}"
+            exit 1
+          }
+          echo "DAST target is reachable."
 
       - name: OWASP ZAP Authenticated Scan
         uses: zaproxy/action-af@v0.3.0
-
+        env:
+          DAST_TARGET: ${{ env.DAST_TARGET }}
+          DAST_USERNAME: ${{ env.DAST_USERNAME }}
+          DAST_PASSWORD: ${{ env.DAST_PASSWORD }}
         with:
-          target: ${{ env.DAST_TARGET }}
-          fail_action: true
-          artifact_name: zap-auth-report
-          cmd_options: "-autorun /zap/wrk/devsecops/zap/automation-auth.resolved.yaml"
+          plan: .github/workflows/zap/plan.yml
+          docker_env_vars: |
+            DAST_TARGET
+            DAST_USERNAME
+            DAST_PASSWORD
 
       - name: Upload ZAP authenticated reports
         uses: actions/upload-artifact@v4
@@ -168,5 +176,5 @@ jobs:
         continue-on-error: true
 
       - name: Stop application container
-        if: always()
+        if: always() && (contains(env.DAST_TARGET, 'localhost') || contains(env.DAST_TARGET, '127.0.0.1'))
         run: docker rm -f student-portal-dast || true

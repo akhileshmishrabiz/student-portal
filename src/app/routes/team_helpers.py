@@ -2,7 +2,7 @@ import csv
 import io
 import re
 
-from flask import abort
+from flask import abort, g
 from flask_login import current_user
 from sqlalchemy import func
 
@@ -22,18 +22,31 @@ def normalize_project_key(value):
 
 def user_team_ids(user_id=None):
     user_id = user_id or current_user.id
-    return [
+    cache_key = f"user_team_ids_{user_id}"
+    if hasattr(g, cache_key):
+        return getattr(g, cache_key)
+
+    team_ids = [
         membership.team_id
         for membership in TeamMember.query.filter_by(user_id=user_id).all()
     ]
+    setattr(g, cache_key, team_ids)
+    return team_ids
 
 
 def user_teams(user_id=None):
     user_id = user_id or current_user.id
+    cache_key = f"user_teams_{user_id}"
+    if hasattr(g, cache_key):
+        return getattr(g, cache_key)
+
     team_ids = user_team_ids(user_id)
     if not team_ids:
-        return []
-    return Team.query.filter(Team.id.in_(team_ids)).order_by(Team.name.asc()).all()
+        teams = []
+    else:
+        teams = Team.query.filter(Team.id.in_(team_ids)).order_by(Team.name.asc()).all()
+    setattr(g, cache_key, teams)
+    return teams
 
 
 def get_team_for_user(team_id, user_id=None):
@@ -62,6 +75,49 @@ def team_member_users(team_id):
         .order_by(User.username.asc())
         .all()
     )
+
+
+def team_member_users_for_teams(team_ids):
+    if not team_ids:
+        return []
+    return (
+        User.query.join(TeamMember, TeamMember.user_id == User.id)
+        .filter(
+            TeamMember.team_id.in_(team_ids),
+            User.is_guest.is_(False),
+        )
+        .order_by(User.username.asc())
+        .distinct(User.id)
+        .all()
+    )
+
+
+def team_stats_for_teams(team_ids, user_id=None):
+    """Batch member/ticket counts and current-user role for team list pages."""
+    user_id = user_id or current_user.id
+    if not team_ids:
+        return {}, {}, {}
+
+    member_counts = dict(
+        db.session.query(TeamMember.team_id, func.count(TeamMember.id))
+        .filter(TeamMember.team_id.in_(team_ids))
+        .group_by(TeamMember.team_id)
+        .all()
+    )
+    ticket_counts = dict(
+        db.session.query(Ticket.team_id, func.count(Ticket.id))
+        .filter(Ticket.team_id.in_(team_ids))
+        .group_by(Ticket.team_id)
+        .all()
+    )
+    memberships = {
+        row.team_id: row
+        for row in TeamMember.query.filter(
+            TeamMember.team_id.in_(team_ids),
+            TeamMember.user_id == user_id,
+        ).all()
+    }
+    return member_counts, ticket_counts, memberships
 
 
 def user_is_team_member(team_id, user_id):

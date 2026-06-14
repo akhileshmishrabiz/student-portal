@@ -504,6 +504,20 @@ def backfill_ticket_teams():
         db.session.commit()
 
 
+def is_devops_data_seeded():
+    """Fast check so startup skips heavy JSON seeding when demo data exists."""
+    return Team.query.filter_by(project_key="DEV").first() is not None
+
+
+def run_devops_seed():
+    team_by_key = seed_devops_teams()
+    seed_devops_retros()
+    seed_devops_tickets(team_by_key)
+    seed_devops_incidents(team_by_key)
+    seed_devops_wheels(team_by_key)
+    backfill_ticket_teams()
+
+
 def ensure_schema():
     """Add columns introduced after first deploy (create_all won't alter tables)."""
     inspector = inspect(db.engine)
@@ -545,8 +559,11 @@ def ensure_schema():
 
     db.session.commit()
 
-    for retro in Retro.query.filter(
+    if Retro.query.filter(
         (Retro.share_token.is_(None)) | (Retro.share_token == "")
-    ).all():
-        retro.share_token = uuid.uuid4().hex
-    db.session.commit()
+    ).limit(1).first():
+        for retro in Retro.query.filter(
+            (Retro.share_token.is_(None)) | (Retro.share_token == "")
+        ).all():
+            retro.share_token = uuid.uuid4().hex
+        db.session.commit()

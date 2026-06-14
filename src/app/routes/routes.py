@@ -11,9 +11,16 @@ from app.models.models import (
     Incident,
 )
 from datetime import datetime, date
-from sqlalchemy import text
+import os
+import time
+
+from sqlalchemy import case, func, text
 from app.routes.incident_helpers import accessible_incidents_query, current_on_call
 from app.routes.team_helpers import accessible_tickets_query, user_teams
+from app.query_options import incident_summary_options, ticket_summary_options
+
+_HEALTH_CACHE_SECONDS = float(os.getenv("HEALTH_CACHE_SECONDS", "5"))
+_health_cache = {"checked_at": 0.0, "healthy": False}
 
 bp = Blueprint("main", __name__)
 
@@ -35,10 +42,20 @@ def _parse_date(value):
 
 @bp.route("/health")
 def health():
+    now = time.time()
+    if now - _health_cache["checked_at"] < _HEALTH_CACHE_SECONDS:
+        if _health_cache["healthy"]:
+            return jsonify({"status": "healthy", "database": "connected"}), 200
+        return jsonify({"status": "unhealthy", "database": "disconnected"}), 503
+
     try:
         db.session.execute(text("SELECT 1"))
+        _health_cache["checked_at"] = now
+        _health_cache["healthy"] = True
         return jsonify({"status": "healthy", "database": "connected"}), 200
     except Exception:
+        _health_cache["checked_at"] = now
+        _health_cache["healthy"] = False
         return jsonify({"status": "unhealthy", "database": "disconnected"}), 503
 
 
@@ -47,22 +64,31 @@ def health():
 def dashboard():
     today = date.today()
 
-    # Get total students
     total_students = Student.query.count()
 
-    # Get today's attendance
-    today_attendance = Attendance.query.filter_by(date=today, status="Present").count()
+    attendance_stats = db.session.query(
+        func.count(Attendance.id).label("total_records"),
+        func.sum(case((Attendance.status == "Present", 1), else_=0)).label(
+            "total_present"
+        ),
+        func.sum(
+            case(
+                (
+                    (Attendance.date == today) & (Attendance.status == "Present"),
+                    1,
+                ),
+                else_=0,
+            )
+        ).label("today_present"),
+    ).one()
 
-    # Calculate total attendance rate
-    total_marked_days = db.session.query(Attendance.date).distinct().count()
-    total_present = Attendance.query.filter_by(status="Present").count()
-    total_records = Attendance.query.count()
-
+    total_records = attendance_stats.total_records or 0
+    total_present = attendance_stats.total_present or 0
+    today_attendance = attendance_stats.today_present or 0
     attendance_rate = round(
         (total_present / total_records * 100) if total_records > 0 else 0, 1
     )
 
-    # Get pinned announcements + 3 most recent
     announcements = (
         Announcement.query.filter_by(is_pinned=True)
         .order_by(Announcement.created_at.desc())
@@ -76,7 +102,6 @@ def dashboard():
     )
     announcements = announcements + recent
 
-    # Get upcoming assignments (due today or later, not completed)
     upcoming_assignments = (
         Assignment.query.filter(
             Assignment.due_date >= today, Assignment.is_completed == False
@@ -88,6 +113,7 @@ def dashboard():
 
     open_incidents = (
         accessible_incidents_query()
+        .options(*incident_summary_options())
         .filter(Incident.status.notin_(["resolved", "postmortem_pending", "closed"]))
         .order_by(Incident.updated_at.desc())
         .limit(5)
@@ -95,13 +121,15 @@ def dashboard():
     )
     my_tickets = (
         accessible_tickets_query()
+        .options(*ticket_summary_options())
         .filter(Ticket.assignee_id == current_user.id, Ticket.status != "done")
         .order_by(Ticket.updated_at.desc())
         .limit(5)
         .all()
     )
+    teams = user_teams()
     on_call_shifts = []
-    for team in user_teams():
+    for team in teams:
         primary = current_on_call(team.id)
         if primary:
             on_call_shifts.append({"team": team, "shift": primary, "role": "primary"})
@@ -124,13 +152,22 @@ def dashboard():
 @login_required
 def students():
     students = Student.query.all()
+    stats = {
+        row.student_id: row
+        for row in db.session.query(
+            Attendance.student_id,
+            func.count(Attendance.id).label("total_days"),
+            func.sum(case((Attendance.status == "Present", 1), else_=0)).label(
+                "present_days"
+            ),
+        )
+        .group_by(Attendance.student_id)
+        .all()
+    }
     for student in students:
-        total_days = Attendance.query.filter_by(student_id=student.id).count()
-        if total_days > 0:
-            present_days = Attendance.query.filter_by(
-                student_id=student.id, status="Present"
-            ).count()
-            student.attendance_rate = round(present_days / total_days * 100, 1)
+        row = stats.get(student.id)
+        if row and row.total_days:
+            student.attendance_rate = round(row.present_days / row.total_days * 100, 1)
         else:
             student.attendance_rate = 0
     return render_template("students.html", students=students)
@@ -141,11 +178,13 @@ def students():
 def attendance():
     selected_date = _parse_date(request.args.get("date", date.today().isoformat()))
     students = Student.query.all()
+    attendance_by_student = {
+        row.student_id: row
+        for row in Attendance.query.filter_by(date=selected_date).all()
+    }
 
     for student in students:
-        student.today_attendance = Attendance.query.filter_by(
-            student_id=student.id, date=selected_date
-        ).first()
+        student.today_attendance = attendance_by_student.get(student.id)
 
     return render_template(
         "attendance.html",

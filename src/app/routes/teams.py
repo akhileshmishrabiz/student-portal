@@ -8,6 +8,7 @@ from app.routes.team_helpers import (
     is_team_owner,
     normalize_project_key,
     parse_bulk_member_rows,
+    team_stats_for_teams,
     upsert_team_member,
     user_teams,
 )
@@ -25,18 +26,17 @@ def require_full_account():
 @login_required
 def list_teams():
     teams = user_teams()
+    team_ids = [team.id for team in teams]
+    member_counts, ticket_counts, memberships = team_stats_for_teams(team_ids)
     team_cards = []
     for team in teams:
-        membership = TeamMember.query.filter_by(
-            team_id=team.id, user_id=current_user.id
-        ).first()
-        member_count = TeamMember.query.filter_by(team_id=team.id).count()
+        membership = memberships.get(team.id)
         team_cards.append(
             {
                 "team": team,
                 "role": membership.role if membership else "member",
-                "member_count": member_count,
-                "ticket_count": len(team.tickets),
+                "member_count": member_counts.get(team.id, 0),
+                "ticket_count": ticket_counts.get(team.id, 0),
             }
         )
 
