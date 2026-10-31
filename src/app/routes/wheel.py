@@ -13,9 +13,9 @@ from app.models.models import (
     SpeakWheelName,
     SpeakWheelPick,
 )
+from app.query_options import wheel_detail_options
 from app.routes.helpers import new_share_token
 from app.routes.team_helpers import get_team_for_user, team_member_users, user_teams
-from app.query_options import wheel_detail_options
 
 wheel_bp = Blueprint("wheel", __name__, url_prefix="/wheel")
 

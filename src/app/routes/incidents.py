@@ -8,11 +8,12 @@ from app import db
 from app.models.models import (
     INCIDENT_EVENT_TYPES,
     INCIDENT_SEVERITIES,
-    INCIDENT_STATUSES,
     INCIDENT_STATUS_TRANSITIONS,
+    INCIDENT_STATUSES,
     Incident,
     Ticket,
 )
+from app.query_options import incident_list_options
 from app.routes.helpers import full_account_required
 from app.routes.incident_helpers import (
     accessible_incidents_query,
@@ -28,7 +29,6 @@ from app.routes.team_helpers import (
     user_teams,
     validate_assignee_for_team,
 )
-from app.query_options import incident_list_options
 
 incidents_bp = Blueprint("incidents", __name__, url_prefix="/incidents")
 

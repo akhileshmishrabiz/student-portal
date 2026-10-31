@@ -129,9 +129,7 @@ def user_is_team_member(team_id, user_id):
 def validate_assignee_for_team(team_id, assignee_id):
     if not assignee_id:
         return None
-    if not user_is_team_member(team_id, assignee_id):
-        return False
-    return True
+    return user_is_team_member(team_id, assignee_id)
 
 
 def next_ticket_number(team_id):

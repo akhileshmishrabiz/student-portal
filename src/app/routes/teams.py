@@ -88,8 +88,8 @@ def create_team():
 @teams_bp.route("/<int:team_id>")
 @login_required
 def view_team(team_id):
-    from app.routes.team_helpers import get_team_for_user, team_member_users
     from app.routes.incident_helpers import current_on_call
+    from app.routes.team_helpers import get_team_for_user, team_member_users
 
     team = get_team_for_user(team_id)
     members = (
@@ -184,7 +184,7 @@ def bulk_add_members(team_id):
     created_count = 0
     added_count = 0
     for row in rows:
-        user, created, error = upsert_team_member(
+        _user, created, error = upsert_team_member(
             team,
             row["email"],
             row["password"],

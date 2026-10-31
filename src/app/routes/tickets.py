@@ -13,6 +13,7 @@ from app.models.models import (
     TicketActivity,
     TicketComment,
 )
+from app.query_options import ticket_list_options
 from app.routes.helpers import full_account_required
 from app.routes.team_helpers import (
     accessible_tickets_query,
@@ -25,7 +26,6 @@ from app.routes.team_helpers import (
     user_teams,
     validate_assignee_for_team,
 )
-from app.query_options import ticket_list_options
 
 tickets_bp = Blueprint("tickets", __name__, url_prefix="/tickets")
 

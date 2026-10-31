@@ -143,9 +143,8 @@ def check_achievements(player_name, game_type, score):
         row.game_type
         for row in GameScore.query.filter_by(player_name=player_name).all()
     }
-    if len(played_games) >= 6:
-        if award_badge(player_name, "devops_legend"):
-            earned.append("devops_legend")
+    if len(played_games) >= 6 and award_badge(player_name, "devops_legend"):
+        earned.append("devops_legend")
     return earned
 
 
