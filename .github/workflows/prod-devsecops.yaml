@@ -52,7 +52,6 @@ jobs:
   infra-plan:
     name: Infrastructure Plan
     runs-on: ubuntu-latest
-    needs: infra-checks
 
     permissions:
       id-token: write
