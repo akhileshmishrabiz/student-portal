@@ -120,24 +120,42 @@ def get_badge_progress(player_name):
 
 def check_achievements(player_name, game_type, score):
     earned = []
-    if game_type == "pipeline_puzzle" and score >= 600:
-        if award_badge(player_name, "pipeline_master"):
-            earned.append("pipeline_master")
-    if game_type == "deploy_rollback" and score >= 300:
-        if award_badge(player_name, "zero_downtime_hero"):
-            earned.append("zero_downtime_hero")
-    if game_type == "log_detective" and score >= 450:
-        if award_badge(player_name, "log_sleuth"):
-            earned.append("log_sleuth")
-    if game_type == "incident_commander" and score >= 350:
-        if award_badge(player_name, "incident_warlord"):
-            earned.append("incident_warlord")
-    if game_type == "dockerfile_builder" and score >= 450:
-        if award_badge(player_name, "docker_whisperer"):
-            earned.append("docker_whisperer")
-    if game_type == "k8s_yaml_fixer" and score >= 450:
-        if award_badge(player_name, "yaml_yoda"):
-            earned.append("yaml_yoda")
+    if (
+        game_type == "pipeline_puzzle"
+        and score >= 600
+        and award_badge(player_name, "pipeline_master")
+    ):
+        earned.append("pipeline_master")
+    if (
+        game_type == "deploy_rollback"
+        and score >= 300
+        and award_badge(player_name, "zero_downtime_hero")
+    ):
+        earned.append("zero_downtime_hero")
+    if (
+        game_type == "log_detective"
+        and score >= 450
+        and award_badge(player_name, "log_sleuth")
+    ):
+        earned.append("log_sleuth")
+    if (
+        game_type == "incident_commander"
+        and score >= 350
+        and award_badge(player_name, "incident_warlord")
+    ):
+        earned.append("incident_warlord")
+    if (
+        game_type == "dockerfile_builder"
+        and score >= 450
+        and award_badge(player_name, "docker_whisperer")
+    ):
+        earned.append("docker_whisperer")
+    if (
+        game_type == "k8s_yaml_fixer"
+        and score >= 450
+        and award_badge(player_name, "yaml_yoda")
+    ):
+        earned.append("yaml_yoda")
 
     played_games = {
         row.game_type

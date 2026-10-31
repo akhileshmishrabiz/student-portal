@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
@@ -89,14 +89,16 @@ def _selected_team(team_id_raw):
 
 
 def _update_incident_timestamps(incident, new_status):
-    now = datetime.utcnow()
+    now = datetime.now(UTC).replace(tzinfo=None)
     if new_status == "investigating" and not incident.acknowledged_at:
         incident.acknowledged_at = now
     if new_status in ("identified", "monitoring") and not incident.mitigated_at:
         incident.mitigated_at = now
-    if new_status in ("resolved", "postmortem_pending", "closed"):
-        if not incident.resolved_at:
-            incident.resolved_at = now
+    if (
+        new_status in ("resolved", "postmortem_pending", "closed")
+        and not incident.resolved_at
+    ):
+        incident.resolved_at = now
 
 
 @incidents_bp.route("")
@@ -217,7 +219,7 @@ def create_incident():
             reporter_id=current_user.id,
             commander_id=commander_id,
             on_call_user_id=on_call_user_id,
-            detected_at=datetime.utcnow(),
+            detected_at=datetime.now(UTC).replace(tzinfo=None),
         )
         db.session.add(incident)
         db.session.flush()

@@ -458,7 +458,7 @@ class Incident(db.Model):
 
     @property
     def duration_minutes(self):
-        end = self.resolved_at or datetime.utcnow()
+        end = self.resolved_at or datetime.now(UTC).replace(tzinfo=None)
         start = self.detected_at or self.created_at
         if not start:
             return None

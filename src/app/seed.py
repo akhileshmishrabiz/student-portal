@@ -1,7 +1,7 @@
 import json
 import os
 import uuid
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 from sqlalchemy import func, inspect, text
@@ -279,7 +279,7 @@ def seed_devops_incidents(team_by_key=None):
         return
 
     data = load_devops_incidents()
-    now = datetime.utcnow()
+    now = datetime.now(UTC).replace(tzinfo=None)
 
     for inc_data in data.get("incidents", []):
         existing = Incident.query.filter_by(
@@ -301,10 +301,10 @@ def seed_devops_incidents(team_by_key=None):
                 minutes=inc_data["detected_at_offset_minutes"]
             )
 
-        def _offset_time(minutes_key):
-            if minutes_key not in inc_data:
+        def _offset_time(minutes_key, incident_data):
+            if minutes_key not in incident_data:
                 return None
-            return now + timedelta(minutes=inc_data[minutes_key])
+            return now + timedelta(minutes=incident_data[minutes_key])
 
         ticket = None
         if inc_data.get("ticket_number"):
@@ -328,9 +328,11 @@ def seed_devops_incidents(team_by_key=None):
             on_call_user_id=on_call.id if on_call else None,
             ticket_id=ticket.id if ticket else None,
             detected_at=detected_at,
-            acknowledged_at=_offset_time("acknowledged_at_offset_minutes"),
-            mitigated_at=_offset_time("mitigated_at_offset_minutes"),
-            resolved_at=_offset_time("resolved_at_offset_minutes"),
+            acknowledged_at=_offset_time(
+                "acknowledged_at_offset_minutes", inc_data
+            ),
+            mitigated_at=_offset_time("mitigated_at_offset_minutes", inc_data),
+            resolved_at=_offset_time("resolved_at_offset_minutes", inc_data),
         )
         db.session.add(incident)
         db.session.flush()
