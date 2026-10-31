@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}{% endblock %} · LivingDevOps Portal</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    {% block extra_head %}{% endblock %}
 </head>
 <body>
     <header class="site-header">
@@ -21,6 +22,7 @@
                 {% endif %}
                 <a href="{{ url_for('retro.list_retros') }}" class="nav-link {% if current_endpoint and current_endpoint.startswith('retro.') %}active{% endif %}">Retros</a>
                 <a href="{{ url_for('wheel.list_wheels') }}" class="nav-link {% if current_endpoint and current_endpoint.startswith('wheel.') %}active{% endif %}">Speak Wheel</a>
+                <a href="{{ url_for('games.home') }}" class="nav-link {% if current_endpoint and current_endpoint.startswith('games.') %}active{% endif %}">DevOps Games</a>
                 {% if not current_user.is_guest %}
                 <a href="{{ url_for('incidents.list_incidents') }}" class="nav-link {% if current_endpoint and current_endpoint.startswith('incidents.') %}active{% endif %}">Incidents</a>
                 <a href="{{ url_for('teams.list_teams') }}" class="nav-link {% if current_endpoint and current_endpoint.startswith('teams.') %}active{% endif %}">Teams</a>
@@ -69,6 +71,7 @@
         {% endif %}
         <a href="{{ url_for('retro.list_retros') }}" class="nav-link">Retros</a>
         <a href="{{ url_for('wheel.list_wheels') }}" class="nav-link">Speak Wheel</a>
+        <a href="{{ url_for('games.home') }}" class="nav-link">DevOps Games</a>
         {% if not current_user.is_guest %}
         <a href="{{ url_for('incidents.list_incidents') }}" class="nav-link">Incidents</a>
         <a href="{{ url_for('teams.list_teams') }}" class="nav-link">Teams</a>

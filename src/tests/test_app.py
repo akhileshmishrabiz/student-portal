@@ -23,6 +23,8 @@ from app.models.models import (
     SpeakWheel,
     SpeakWheelName,
     SpeakWheelPick,
+    GameScore,
+    PlayerProfile,
 )
 from app.seed import ADMIN_EMAIL
 from datetime import date, timedelta
@@ -791,3 +793,69 @@ def test_wheel_bulk_add_names(auth_client, app):
     data = response.get_json()
     assert data["added"] == 3
     assert data["state"]["total"] == 4
+
+
+# ── DevOps Games tests ────────────────────────────────────────────────────────
+
+
+GAME_SLUGS = [
+    "pipeline-puzzle",
+    "incident-commander",
+    "dockerfile-builder",
+    "k8s-yaml-fixer",
+    "log-detective",
+    "deploy-rollback",
+]
+
+
+def test_games_requires_login(client):
+    response = client.get("/games/")
+    assert response.status_code == 302
+    assert "/login" in response.location
+
+
+def test_games_home_and_pages(auth_client):
+    response = auth_client.get("/games/")
+    assert response.status_code == 200
+    assert b"On-Call Arcade" in response.data
+    assert b"Daily Challenge" in response.data
+
+    for slug in GAME_SLUGS:
+        page = auth_client.get(f"/games/{slug}")
+        assert page.status_code == 200, slug
+
+    assert auth_client.get("/games/leaderboard").status_code == 200
+    assert auth_client.get("/games/achievements").status_code == 200
+
+
+def test_games_invalid_slug_returns_404(auth_client):
+    response = auth_client.get("/games/not-a-real-game")
+    assert response.status_code == 404
+
+
+def test_games_submit_score_and_leaderboard(auth_client, app):
+    headers = {"Content-Type": "application/json"}
+    response = auth_client.post(
+        "/games/api/score",
+        json={"game_type": "pipeline_puzzle", "score": 600, "details": "pytest"},
+        headers=headers,
+    )
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["ok"] is True
+    assert data["score"] >= 600
+
+    with app.app_context():
+        user = User.query.filter_by(username="testuser").first()
+        label = user.label
+        assert GameScore.query.filter_by(player_name=label).count() >= 1
+        assert PlayerProfile.query.filter_by(player_name=label).first() is not None
+
+    lb = auth_client.get("/games/leaderboard")
+    assert lb.status_code == 200
+    assert label.encode() in lb.data
+
+    api_lb = auth_client.get("/games/api/leaderboard")
+    assert api_lb.status_code == 200
+    assert len(api_lb.get_json()) >= 1
+

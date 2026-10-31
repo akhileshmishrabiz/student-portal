@@ -74,6 +74,7 @@ def create_app():
             incidents,
             postmortems,
             wheel,
+            games,
         )
         from app.models import models  # noqa: F401 — register models before create_all
         from app.seed import (
@@ -91,6 +92,7 @@ def create_app():
         app.register_blueprint(incidents.incidents_bp)
         app.register_blueprint(postmortems.postmortems_bp)
         app.register_blueprint(wheel.wheel_bp)
+        app.register_blueprint(games.games_bp)
 
         db.create_all()
         ensure_schema()
