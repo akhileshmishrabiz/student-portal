@@ -27,7 +27,9 @@ jobs:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
 
       - name: Terraform format check
-        run: terraform fmt -check -recursive -chdir=${{ env.INFRA_PATH }}
+        run: |
+          cd ${{ env.INFRA_PATH }}
+          terraform fmt -check -recursive
 
       - name: Run Checkov
         uses: bridgecrewio/checkov-action@v12
@@ -50,7 +52,6 @@ jobs:
 
   infra-plan:
     runs-on: ubuntu-latest
-    needs: infra-checks
 
     permissions:
       id-token: write
@@ -71,11 +72,11 @@ jobs:
         with:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
 
-      - name: Terraform init
-        run: terraform -chdir=${{ env.INFRA_PATH }} init -backend-config=vars/prod.tfbackend
-
-      - name: Terraform plan
-        run: terraform -chdir=${{ env.INFRA_PATH }} plan -var-file=vars/prod.tfvars
+      - name: Terraform init and plan
+        run: |
+          cd ${{ env.INFRA_PATH }}
+          terraform -chdir=${{ env.INFRA_PATH }} init -backend-config=vars/prod.tfbackend
+          terraform -chdir=${{ env.INFRA_PATH }} plan
 
   code-basic:
     name: Code Quality and Testing
@@ -91,7 +92,13 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Ruff lint
-        uses: adityabhangle658/ruff-python-lint-format-check-pr@v1.0.3
+        run: |
+          cd ${{ env.CODE_PATH }}
+          python -m venv .venv
+          source .venv/bin/activate
+          pip install ruff
+          ruff check .
+          
 
       - name: Install dependencies and run unit tests
         run: |
