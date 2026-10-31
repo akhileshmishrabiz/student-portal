@@ -187,7 +187,6 @@ jobs:
       - name: Stop application container
         if: always()
         run: docker rm -f student-portal-dast || true
-
   container-scan:
     name: Container Image Scan
     runs-on: ubuntu-latest
