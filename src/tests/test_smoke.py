@@ -10,6 +10,7 @@ complete in seconds.
 """
 
 import os
+
 import pytest
 
 os.environ.setdefault("DB_LINK", "sqlite:///:memory:")

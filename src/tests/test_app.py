@@ -1,33 +1,34 @@
 import os
+
 import pytest
 
 os.environ.setdefault("DB_LINK", "sqlite:///:memory:")
 
+from datetime import date, timedelta
+
 from app import create_app, db
 from app.models.models import (
-    User,
-    Student,
-    Attendance,
     Assignment,
+    Attendance,
+    GameScore,
+    Incident,
+    OnCallSchedule,
+    PlayerProfile,
     Retro,
     RetroCard,
     RetroLike,
-    Ticket,
-    Subtask,
-    TicketComment,
-    Team,
-    TeamMember,
-    Incident,
-    Postmortem,
-    OnCallSchedule,
     SpeakWheel,
     SpeakWheelName,
     SpeakWheelPick,
-    GameScore,
-    PlayerProfile,
+    Student,
+    Subtask,
+    Team,
+    TeamMember,
+    Ticket,
+    TicketComment,
+    User,
 )
 from app.seed import ADMIN_EMAIL
-from datetime import date, timedelta
 
 
 @pytest.fixture

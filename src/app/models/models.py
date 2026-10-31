@@ -1,7 +1,9 @@
-from app import db, login_manager
-from datetime import datetime, timezone
-from bcrypt import hashpw, checkpw, gensalt
+from datetime import UTC, datetime
+
+from bcrypt import checkpw, gensalt, hashpw
 from flask_login import UserMixin
+
+from app import db, login_manager
 
 RETRO_CATEGORIES = {
     "went_well": {"label": "What Went Well", "emoji": "🎉", "color": "#fef08a"},
@@ -48,7 +50,7 @@ class Student(db.Model):
 class Attendance(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     date = db.Column(
-        db.Date, nullable=False, default=lambda: datetime.now(timezone.utc)
+        db.Date, nullable=False, default=lambda: datetime.now(UTC)
     )
     status = db.Column(db.String(10), nullable=False)
     student_id = db.Column(db.Integer, db.ForeignKey("student.id"), nullable=False)

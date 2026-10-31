@@ -45,7 +45,6 @@ def safe_next_url(target):
 
 
 def unique_guest_username(display_name):
-    from app import db
     from app.models.models import User
 
     base = re.sub(r"[^a-zA-Z0-9_]", "", display_name.replace(" ", "_").lower())[:20]
@@ -70,9 +69,7 @@ def validate_password(password):
         return False
     if not re.search("[A-Z]", password):
         return False
-    if not re.search("[0-9]", password):
-        return False
-    return True
+    return re.search("[0-9]", password)
 
 
 def validate_email(email):
@@ -81,7 +78,6 @@ def validate_email(email):
 
 
 def unique_username_from_email(email):
-    from app import db
     from app.models.models import User
 
     local = email.split("@")[0]

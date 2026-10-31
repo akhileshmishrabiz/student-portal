@@ -1,5 +1,5 @@
+
 from prometheus_client import Counter, Histogram, Info
-import time
 
 # Metrics
 http_requests_total = Counter(

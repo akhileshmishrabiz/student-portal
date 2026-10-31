@@ -1,23 +1,24 @@
-from flask import Blueprint, jsonify, render_template, request, redirect, url_for, flash
-from flask_login import login_required, current_user
-from app.models.models import (
-    Student,
-    Attendance,
-    db,
-    Class,
-    Assignment,
-    Announcement,
-    Ticket,
-    Incident,
-)
-from datetime import datetime, date
 import os
 import time
+from datetime import date, datetime
 
+from flask import Blueprint, flash, jsonify, redirect, render_template, request, url_for
+from flask_login import current_user, login_required
 from sqlalchemy import case, func, text
+
+from app.models.models import (
+    Announcement,
+    Assignment,
+    Attendance,
+    Class,
+    Incident,
+    Student,
+    Ticket,
+    db,
+)
+from app.query_options import incident_summary_options, ticket_summary_options
 from app.routes.incident_helpers import accessible_incidents_query, current_on_call
 from app.routes.team_helpers import accessible_tickets_query, user_teams
-from app.query_options import incident_summary_options, ticket_summary_options
 
 _HEALTH_CACHE_SECONDS = float(os.getenv("HEALTH_CACHE_SECONDS", "5"))
 _health_cache = {"checked_at": 0.0, "healthy": False}
@@ -283,7 +284,7 @@ def add_class():
             db.session.commit()
             flash("Class added successfully!", "success")
             return redirect(url_for("main.classes"))
-        except Exception as e:
+        except Exception:
             flash("Error adding class.", "error")
             return redirect(url_for("main.add_class"))
     return render_template("add_class.html")
@@ -316,7 +317,7 @@ def edit_class(id):
             db.session.commit()
             flash("Class updated successfully!", "success")
             return redirect(url_for("main.classes"))
-        except Exception as e:
+        except Exception:
             flash("Error updating class.", "error")
 
     return render_template("edit_class.html", class_obj=class_obj)

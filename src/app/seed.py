@@ -4,26 +4,26 @@ import uuid
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from sqlalchemy import inspect, text, func
+from sqlalchemy import func, inspect, text
 
 from app import db
 from app.models.models import (
+    Incident,
+    IncidentEvent,
+    OnCallSchedule,
+    Postmortem,
+    PostmortemActionItem,
     Retro,
     RetroCard,
     RetroParticipant,
+    SpeakWheel,
+    SpeakWheelName,
     Subtask,
     Team,
     TeamMember,
     Ticket,
     TicketComment,
     User,
-    Incident,
-    IncidentEvent,
-    Postmortem,
-    PostmortemActionItem,
-    SpeakWheel,
-    SpeakWheelName,
-    OnCallSchedule,
 )
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"

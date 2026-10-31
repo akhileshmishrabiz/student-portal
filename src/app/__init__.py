@@ -1,15 +1,16 @@
-from flask import Flask, request
-from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager
 import os
+import time
 
-from config import Config
+from flask import Flask, request
+from flask_login import LoginManager
+from flask_sqlalchemy import SQLAlchemy
 from prometheus_client import make_wsgi_app
 from werkzeug.middleware.dispatcher import DispatcherMiddleware
 from werkzeug.middleware.proxy_fix import ProxyFix
-import time
+
 from app.logging_config import setup_logging
 from app.metrics import http_requests_total, request_duration_seconds
+from config import Config
 
 db = SQLAlchemy()
 login_manager = LoginManager()
@@ -65,18 +66,18 @@ def create_app():
         return response
 
     with app.app_context():
+        from app.models import models  # noqa: F401 — register models before create_all
         from app.routes import (
-            routes,
             auth,
-            retro,
-            tickets,
-            teams,
+            games,
             incidents,
             postmortems,
+            retro,
+            routes,
+            teams,
+            tickets,
             wheel,
-            games,
         )
-        from app.models import models  # noqa: F401 — register models before create_all
         from app.seed import (
             ensure_schema,
             is_devops_data_seeded,
