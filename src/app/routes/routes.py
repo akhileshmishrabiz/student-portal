@@ -6,6 +6,7 @@ from flask import Blueprint, flash, jsonify, redirect, render_template, request,
 from flask_login import current_user, login_required
 from sqlalchemy import case, func, text
 from sqlalchemy.exc import SQLAlchemyError
+
 from app.models.models import (
     Announcement,
     Assignment,
