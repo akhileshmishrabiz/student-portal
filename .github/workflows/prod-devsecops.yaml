@@ -28,7 +28,9 @@ jobs:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
 
       - name: Terraform format check
-        run: terraform fmt -check -recursive -chdir=${{ env.INFRA_PATH }}
+        run: |
+          cd ${{ env.INFRA_PATH }}
+          terraform fmt -check -recursive
 
       - name: Run Checkov
         uses: bridgecrewio/checkov-action@v12
@@ -72,11 +74,11 @@ jobs:
         with:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
 
-      - name: Terraform init
-        run: terraform -chdir=${{ env.INFRA_PATH }} init -backend-config=vars/prod.tfbackend
-
-      - name: Terraform plan
-        run: terraform -chdir=${{ env.INFRA_PATH }} plan -var-file=vars/prod.tfvars
+      - name: Terraform init and plan
+        run: |
+          cd ${{ env.INFRA_PATH }}
+          terraform -chdir=${{ env.INFRA_PATH }} init -backend-config=vars/prod.tfbackend
+          terraform -chdir=${{ env.INFRA_PATH }} plan
 
   code-basic:
     name: Code Quality and Testing
