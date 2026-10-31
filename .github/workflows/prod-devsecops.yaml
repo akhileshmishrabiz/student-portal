@@ -75,8 +75,8 @@ jobs:
       - name: Terraform init and plan
         run: |
           cd ${{ env.INFRA_PATH }}
-          terraform -chdir=${{ env.INFRA_PATH }} init -backend-config=vars/prod.tfbackend
-          terraform -chdir=${{ env.INFRA_PATH }} plan
+          terraform init -backend-config=vars/prod.tfbackend
+          terraform plan -var-file=vars/prod.tfvars
 
   code-basic:
     name: Code Quality and Testing
