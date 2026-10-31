@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 
 from flask import abort
 from flask_login import current_user
@@ -39,7 +39,7 @@ def get_incident_for_user(incident_id, user_id=None):
 
 
 def current_on_call(team_id, role="primary", at=None):
-    at = at or datetime.utcnow()
+    at = at or datetime.now(UTC).replace(tzinfo=None)
     return (
         OnCallSchedule.query.filter(
             OnCallSchedule.team_id == team_id,

@@ -5,6 +5,7 @@ from datetime import date, datetime
 from flask import Blueprint, flash, jsonify, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 from sqlalchemy import case, func, text
+from sqlalchemy.exc import SQLAlchemyError
 
 from app.models.models import (
     Announcement,
@@ -54,7 +55,7 @@ def health():
         _health_cache["checked_at"] = now
         _health_cache["healthy"] = True
         return jsonify({"status": "healthy", "database": "connected"}), 200
-    except Exception:
+    except SQLAlchemyError:
         _health_cache["checked_at"] = now
         _health_cache["healthy"] = False
         return jsonify({"status": "unhealthy", "database": "disconnected"}), 503
@@ -233,7 +234,7 @@ def mark_attendance():
         db.session.commit()
         flash("Attendance marked successfully", "success")
         return redirect(url_for("main.attendance", date=attendance_date.isoformat()))
-    except Exception:
+    except (SQLAlchemyError, TypeError, ValueError):
         db.session.rollback()
         flash("Error marking attendance", "error")
         return redirect(url_for("main.attendance"))
@@ -284,7 +285,7 @@ def add_class():
             db.session.commit()
             flash("Class added successfully!", "success")
             return redirect(url_for("main.classes"))
-        except Exception:
+        except (KeyError, SQLAlchemyError, TypeError, ValueError):
             flash("Error adding class.", "error")
             return redirect(url_for("main.add_class"))
     return render_template("add_class.html")
@@ -317,7 +318,7 @@ def edit_class(id):
             db.session.commit()
             flash("Class updated successfully!", "success")
             return redirect(url_for("main.classes"))
-        except Exception:
+        except (KeyError, SQLAlchemyError, TypeError, ValueError):
             flash("Error updating class.", "error")
 
     return render_template("edit_class.html", class_obj=class_obj)
@@ -366,7 +367,7 @@ def add_assignment():
             db.session.add(assignment)
             db.session.commit()
             flash("Assignment added successfully!", "success")
-        except Exception:
+        except (SQLAlchemyError, ValueError):
             flash("Error adding assignment.", "error")
     else:
         flash("Title and due date are required.", "error")

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
@@ -180,7 +180,7 @@ def update_postmortem(postmortem_id):
     if new_status in POSTMORTEM_STATUSES and new_status != postmortem.status:
         postmortem.status = new_status
         if new_status == "published" and not postmortem.published_at:
-            postmortem.published_at = datetime.utcnow()
+            postmortem.published_at = datetime.now(UTC).replace(tzinfo=None)
             log_incident_event(
                 incident,
                 current_user.id,

@@ -187,3 +187,27 @@ jobs:
       - name: Stop application container
         if: always()
         run: docker rm -f student-portal-dast || true
+  container-scan:
+    name: Container Image Scan
+    runs-on: ubuntu-latest
+    needs: [dockerfile-scan]
+    # Image build + CVE scan is slower; run on main pushes only, not every PR
+    if: github.event_name != 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build image
+        run: docker build -t student-portal:${{ github.sha }} src
+
+      - name: Trivy image scan
+        uses: aquasecurity/trivy-action@v0.36.0
+        env:
+          TRIVY_DISABLE_VEX_NOTICE: true
+        with:
+          image-ref: student-portal:${{ github.sha }}
+          format: table
+          severity: CRITICAL,HIGH
+          scan-type: image
+          exit-code: "1"
+          ignore-unfixed: true
+
