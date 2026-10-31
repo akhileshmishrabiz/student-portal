@@ -3,6 +3,7 @@ import os
 _db_uri = os.getenv("DB_LINK", "sqlite:////tmp/student_portal.db")
 
 
+
 class Config:
     SQLALCHEMY_DATABASE_URI = _db_uri
     SQLALCHEMY_TRACK_MODIFICATIONS = False
