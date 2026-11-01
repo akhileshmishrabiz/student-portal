@@ -16,7 +16,6 @@ env:
   DAST_TARGET: http://localhost:8000
 
 jobs:
-
   # -----------------------------
   # Infrastructure Security Checks
   # -----------------------------
@@ -187,14 +186,21 @@ jobs:
       - name: Stop application container
         if: always()
         run: docker rm -f student-portal-dast || true
+
+  # -----------------------------
+  # Container Image Security Scan
+  # -----------------------------
   container-scan:
     name: Container Image Scan
     runs-on: ubuntu-latest
-    needs: [dockerfile-scan]
+    needs: [code-basic]
+
     # Image build + CVE scan is slower; run on main pushes only, not every PR
     if: github.event_name != 'pull_request'
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Build image
         run: docker build -t student-portal:${{ github.sha }} src
@@ -211,10 +217,14 @@ jobs:
           exit-code: "1"
           ignore-unfixed: true
 
+  # -----------------------------
+  # Static Application Security Testing
+  # -----------------------------
   code-static-scan:
-    name: code QL scan
+    name: CodeQL Scan
     runs-on: ubuntu-latest
     continue-on-error: true
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -228,5 +238,3 @@ jobs:
         uses: github/codeql-action/analyze@v3
         with:
           language: python
-          
-
