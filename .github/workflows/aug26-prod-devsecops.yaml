@@ -1,5 +1,5 @@
 
-name: Prod DevSecOps Pipeline
+name: Prod DevSecOps Pipeline aug26
 
 on:
   pull_request:
@@ -210,4 +210,23 @@ jobs:
           scan-type: image
           exit-code: "1"
           ignore-unfixed: true
+
+  code-static-scan:
+    name: code QL scan
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: python
+
+      - name: Run CodeQL
+        uses: github/codeql-action/analyze@v3
+        with:
+          language: python
+          
 
