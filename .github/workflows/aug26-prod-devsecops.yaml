@@ -225,6 +225,11 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: true
 
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -238,3 +243,31 @@ jobs:
         uses: github/codeql-action/analyze@v3
         with:
           language: python
+
+      # Upload CodeQL SARIF report as a downloadable artifact.
+      # Access: GitHub → Actions → Workflow Run → Artifacts.
+      - name: Upload CodeQL Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: codeql-security-report
+          path: results/
+          if-no-files-found: warn
+          retention-days: 30
+
+  sonar-scan:
+    name: SonarQube Scan & Quality Gate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v6
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        
