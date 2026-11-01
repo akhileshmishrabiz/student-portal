@@ -272,4 +272,13 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-        
+
+      - name: Enforce SonarQube Quality Gate
+        uses: SonarSource/sonarqube-quality-gate-action@v1.2
+        timeout-minutes: 10
+        with:
+          scanMetadataReportFile: src/.scannerwork/report-task.txt
+          pollingTimeoutSec: 600
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
