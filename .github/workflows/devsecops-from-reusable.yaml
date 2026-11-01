@@ -1,0 +1,79 @@
+name: Prod DevSecOps Pipeline (Reusable)
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  terraform:
+    name: Terraform Security and Plan
+    uses: akhileshmishrabiz/reusabe-workflows/.github/workflows/terraform-security-plan.yml@main
+    permissions:
+      contents: read
+      id-token: write
+    with:
+      infra_path: ecs-infra
+      terraform_version: "1.8.1"
+      tflint_version: v0.54.0
+      aws_region: ap-south-1
+      aws_role_to_assume: arn:aws:iam::879381241087:role/aws-github-oidc-aug26
+      backend_config: vars/prod.tfbackend
+      var_file: vars/prod.tfvars
+
+  python-quality:
+    name: Python Quality, Tests, and SonarQube
+    uses: akhileshmishrabiz/reusabe-workflows/.github/workflows/python-quality-sonar.yml@main
+    permissions:
+      contents: read
+    with:
+      code_path: src
+      python_version: "3.13"
+      smoke_script: .github/scripts/smoke-test.sh
+      sonar_project_base_dir: src
+      sonar_metadata_file: src/.scannerwork/report-task.txt
+      quality_gate_timeout: "600"
+    secrets:
+      SMOKE_USERNAME: ${{ secrets.SMOKE_USERNAME }}
+      SMOKE_PASSWORD: ${{ secrets.SMOKE_PASSWORD }}
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+  dast:
+    name: DAST Baseline Scan
+    uses: akhileshmishrabiz/reusabe-workflows/.github/workflows/dast-baseline.yml@main
+    permissions:
+      contents: read
+    with:
+      code_path: src
+      app_port: "8000"
+      dast_target: http://localhost:8000
+      image_name: student-portal-dast
+      zap_rules_file: .zap/rules.tsv
+    secrets:
+      DAST_PASSWORD: ${{ secrets.DAST_PASSWORD }}
+
+  container-scan:
+    name: Container Image Scan
+    if: github.event_name != 'pull_request'
+    uses: akhileshmishrabiz/reusabe-workflows/.github/workflows/container-trivy.yml@main
+    permissions:
+      contents: read
+    with:
+      code_path: src
+      image_name: student-portal
+      severity: CRITICAL,HIGH
+      ignore_unfixed: true
+
+  codeql:
+    name: CodeQL Scan
+    uses: akhileshmishrabiz/reusabe-workflows/.github/workflows/codeql.yml@main
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+    with:
+      language: python
+      continue_on_error: true
+      artifact_retention_days: 30
