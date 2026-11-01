@@ -70,7 +70,6 @@ jobs:
   infra-plan:
     name: Infrastructure Plan
     runs-on: ubuntu-latest
-    needs: infra-checks
 
     permissions:
       id-token: write
@@ -195,7 +194,6 @@ jobs:
   container-scan:
     name: Container Image Scan
     runs-on: ubuntu-latest
-    needs: [code-basic]
 
     # Image build + CVE scan is slower; run on main pushes only, not every PR
     if: github.event_name != 'pull_request'
