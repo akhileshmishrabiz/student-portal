@@ -33,14 +33,14 @@ if [[ "$ID" == "amzn" && "${VERSION_ID%%.*}" == "2" ]]; then
 
     yum update -y
     amazon-linux-extras install docker -y
-    yum install -y git curl openssl
+    yum install -y git curl openssl --skip-broken
 
 elif [[ "$ID" == "amzn" && "${VERSION_ID%%.*}" == "2023" ]]; then
 
     echo "Installing Docker on Amazon Linux 2023"
 
     dnf update -y
-    dnf install -y docker git curl openssl
+    dnf install -y docker git curl openssl --skip-broken
 
 else
     echo "Unsupported OS: $PRETTY_NAME"
